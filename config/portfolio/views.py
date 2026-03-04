@@ -1,6 +1,7 @@
 import yfinance as yf
 from django.shortcuts import get_object_or_404
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -120,16 +121,44 @@ def _correlation_label(value):
     return "Highly Inverse Correlated"
 
 
+def _get_user_portfolio(user, portfolio_id):
+    return get_object_or_404(Portfolio, pk=portfolio_id, owner=user)
+
+
+def _refresh_stock_snapshot(stock):
+    metrics = _get_stock_metrics(stock.stock_id)
+    stock.current_price = metrics["current_price"]
+    stock.pe_ratio = metrics["pe_ratio"]
+    stock.min_price = metrics["min_price"]
+    stock.max_price = metrics["max_price"]
+    stock.discount_percentage = metrics["discount_percentage"]
+    stock.discount_level = metrics["discount_percentage"]
+    stock.opportunity_score = metrics["opportunity_score"]
+    stock.save(
+        update_fields=[
+            "current_price",
+            "pe_ratio",
+            "min_price",
+            "max_price",
+            "discount_percentage",
+            "discount_level",
+            "opportunity_score",
+        ]
+    )
+
+
 class PortfolioListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        portfolios = Portfolio.objects.all().order_by("name")
+        portfolios = Portfolio.objects.filter(owner=request.user).order_by("name")
         serializer = PortfolioSerializer(portfolios, many=True)
         return Response(serializer.data)
 
     def post(self, request):
         serializer = PortfolioSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        portfolio = serializer.save()
+        portfolio = serializer.save(owner=request.user)
         return Response(
             PortfolioSerializer(portfolio).data,
             status=status.HTTP_201_CREATED,
@@ -137,21 +166,30 @@ class PortfolioListAPIView(APIView):
 
 
 class PortfolioDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, portfolio_id):
-        portfolio = get_object_or_404(Portfolio, pk=portfolio_id)
+        portfolio = _get_user_portfolio(request.user, portfolio_id)
+        for stock in portfolio.stocks.all():
+            _refresh_stock_snapshot(stock)
+        portfolio.refresh_from_db()
         serializer = PortfolioDetailSerializer(portfolio)
         return Response(serializer.data)
 
 
 class StockByPortfolioAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, portfolio_id):
-        portfolio = get_object_or_404(Portfolio, pk=portfolio_id)
+        portfolio = _get_user_portfolio(request.user, portfolio_id)
+        for stock in portfolio.stocks.all():
+            _refresh_stock_snapshot(stock)
         stocks = portfolio.stocks.all().order_by("name")
         serializer = StockSerializer(stocks, many=True)
         return Response(serializer.data)
 
     def post(self, request, portfolio_id):
-        portfolio = get_object_or_404(Portfolio, pk=portfolio_id)
+        portfolio = _get_user_portfolio(request.user, portfolio_id)
         serializer = StockCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -186,11 +224,14 @@ class StockByPortfolioAPIView(APIView):
 
 
 class StockDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, portfolio_id, stock_id):
         stock = get_object_or_404(
             Stock,
             id=stock_id,
             portfolio_id=portfolio_id,
+            portfolio__owner=request.user,
         )
         range_key = request.GET.get("range", "1mo")
         config = RANGE_MAP.get(range_key, RANGE_MAP["1mo"])
@@ -262,12 +303,15 @@ class StockDetailAPIView(APIView):
             Stock,
             id=stock_id,
             portfolio_id=portfolio_id,
+            portfolio__owner=request.user,
         )
         stock.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class StockSuggestionAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         query = request.GET.get("q", "").strip()
         if len(query) < 2:
@@ -297,6 +341,8 @@ class StockSuggestionAPIView(APIView):
 
 
 class MetalsAnalyticsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         range_key = request.GET.get("range", "1mo")
         range_config = METAL_RANGE_MAP.get(range_key, METAL_RANGE_MAP["1mo"])

@@ -2,6 +2,13 @@ from django.db import models
 
 
 class Portfolio(models.Model):
+    owner = models.ForeignKey(
+        "staff.Staff",
+        on_delete=models.CASCADE,
+        related_name="portfolios",
+        null=True,
+        blank=True,
+    )
     name = models.CharField(max_length=100)
     sector = models.CharField(max_length=100)
 

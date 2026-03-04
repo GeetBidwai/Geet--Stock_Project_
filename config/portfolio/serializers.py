@@ -3,9 +3,11 @@ from .models import Portfolio, Stock
 
 
 class PortfolioSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source="owner.username")
+
     class Meta:
         model = Portfolio
-        fields = '__all__'
+        fields = ["id", "name", "sector", "owner"]
 
 
 class StockSerializer(serializers.ModelSerializer):
@@ -16,10 +18,11 @@ class StockSerializer(serializers.ModelSerializer):
 
 class PortfolioDetailSerializer(serializers.ModelSerializer):
     stocks = StockSerializer(many=True, read_only=True)
+    owner = serializers.ReadOnlyField(source="owner.username")
 
     class Meta:
         model = Portfolio
-        fields = ["id", "name", "sector", "stocks"]
+        fields = ["id", "name", "sector", "owner", "stocks"]
 
 
 class StockCreateSerializer(serializers.Serializer):
