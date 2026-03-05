@@ -1,0 +1,87 @@
+[05/Mar/2026 12:04:08] "GET /api/ HTTP/1.1" 200 116
+[05/Mar/2026 12:04:08,596] - Broken pipe from ('127.0.0.1', 56287)
+[05/Mar/2026 12:04:28] "OPTIONS /api/login/ HTTP/1.1" 200 0
+[05/Mar/2026 12:04:28] "POST /api/login/ HTTP/1.1" 200 489
+[05/Mar/2026 12:04:28] "OPTIONS /api/me/ HTTP/1.1" 200 0
+[05/Mar/2026 12:04:28] "GET /api/me/ HTTP/1.1" 200 71
+[05/Mar/2026 12:04:28] "OPTIONS /api/portfolios/ HTTP/1.1" 200 0
+[05/Mar/2026 12:04:28] "OPTIONS /api/portfolios/ HTTP/1.1" 200 0
+[05/Mar/2026 12:04:28] "GET /api/portfolios/ HTTP/1.1" 200 151
+[05/Mar/2026 12:04:28] "GET /api/portfolios/ HTTP/1.1" 200 151
+[05/Mar/2026 12:04:32] "OPTIONS /api/portfolios/9/ HTTP/1.1" 200 0
+[05/Mar/2026 12:04:32] "OPTIONS /api/portfolios/9/ HTTP/1.1" 200 0
+[05/Mar/2026 12:04:34] "GET /api/portfolios/9/ HTTP/1.1" 200 330
+[05/Mar/2026 12:04:34] "GET /api/portfolios/9/ HTTP/1.1" 200 330
+[05/Mar/2026 12:04:38] "GET /api/portfolios/ HTTP/1.1" 200 151
+[05/Mar/2026 12:04:38] "GET /api/portfolios/ HTTP/1.1" 200 151
+[05/Mar/2026 12:04:39] "GET /api/portfolios/ HTTP/1.1" 200 151
+[05/Mar/2026 12:04:39] "GET /api/portfolios/ HTTP/1.1" 200 151
+Unauthorized: /api/metals/analytics/
+[05/Mar/2026 12:04:46] "GET /api/metals/analytics/?range=1mo HTTP/1.1" 401 172
+Unauthorized: /api/metals/analytics/
+[05/Mar/2026 12:04:46] "GET /api/metals/analytics/?range=1mo HTTP/1.1" 401 172
+Unauthorized: /api/metals/analytics/
+[05/Mar/2026 12:04:51] "GET /api/metals/analytics/?range=3mo HTTP/1.1" 401 172
+Unauthorized: /api/metals/analytics/
+[05/Mar/2026 12:04:53] "GET /api/metals/analytics/?range=1mo HTTP/1.1" 401 172
+Unauthorized: /api/metals/analytics/
+[05/Mar/2026 12:04:53] "GET /api/metals/analytics/?range=1mo HTTP/1.1" 401 172
+[05/Mar/2026 12:05:00] "OPTIONS /api/metals/analytics/?range=1mo HTTP/1.1" 200 0
+[05/Mar/2026 12:05:00] "OPTIONS /api/metals/analytics/?range=1mo HTTP/1.1" 200 0
+[05/Mar/2026 12:05:01] "GET /api/metals/analytics/?range=1mo HTTP/1.1" 200 12754
+[05/Mar/2026 12:05:01] "GET /api/metals/analytics/?range=1mo HTTP/1.1" 200 12754
+[05/Mar/2026 12:05:02] "OPTIONS /api/metals/analytics/?range=3mo HTTP/1.1" 200 0
+[05/Mar/2026 12:05:02] "GET /api/metals/analytics/?range=3mo HTTP/1.1" 200 18703
+[05/Mar/2026 12:06:09] "GET /api/portfolios/ HTTP/1.1" 200 151
+[05/Mar/2026 12:06:09] "GET /api/portfolios/ HTTP/1.1" 200 151
+[05/Mar/2026 12:06:11] "GET /api/portfolios/9/ HTTP/1.1" 200 330
+[05/Mar/2026 12:06:11] "GET /api/portfolios/9/ HTTP/1.1" 200 330
+[05/Mar/2026 12:08:48] "GET /api/portfolios/ HTTP/1.1" 200 151
+[05/Mar/2026 12:08:48] "GET /api/portfolios/ HTTP/1.1" 200 151
+[05/Mar/2026 12:08:57] "OPTIONS /api/portfolios/7/ HTTP/1.1" 200 0
+[05/Mar/2026 12:08:57] "OPTIONS /api/portfolios/7/ HTTP/1.1" 200 0
+[05/Mar/2026 12:08:58] "GET /api/portfolios/7/ HTTP/1.1" 200 599
+[05/Mar/2026 12:08:58] "GET /api/portfolios/7/ HTTP/1.1" 200 599
+Unauthorized: /api/portfolios/7/
+[05/Mar/2026 12:38:00] "GET /api/portfolios/7/ HTTP/1.1" 401 172
+Unauthorized: /api/portfolios/7/
+[05/Mar/2026 12:38:00] "GET /api/portfolios/7/ HTTP/1.1" 401 172
+Unauthorized: /api/portfolios/
+[05/Mar/2026 12:38:02] "GET /api/portfolios/ HTTP/1.1" 401 172
+Unauthorized: /api/portfolios/
+[05/Mar/2026 12:38:02] "GET /api/portfolios/ HTTP/1.1" 401 172
+[05/Mar/2026 12:38:11] "POST /api/login/ HTTP/1.1" 200 489
+[05/Mar/2026 12:38:11] "GET /api/me/ HTTP/1.1" 200 71
+[05/Mar/2026 12:38:11] "GET /api/portfolios/ HTTP/1.1" 200 151
+[05/Mar/2026 12:38:11] "GET /api/portfolios/ HTTP/1.1" 200 151
+[05/Mar/2026 12:38:13] "GET /api/portfolios/9/ HTTP/1.1" 200 330
+[05/Mar/2026 12:38:13] "GET /api/portfolios/9/ HTTP/1.1" 200 330
+[05/Mar/2026 12:38:16] "OPTIONS /api/portfolios/9/stocks/20/?range=1mo HTTP/1.1" 200 0
+[05/Mar/2026 12:38:16] "OPTIONS /api/portfolios/9/stocks/20/?range=1mo HTTP/1.1" 200 0
+[05/Mar/2026 12:38:17] "GET /api/portfolios/9/stocks/20/?range=1mo HTTP/1.1" 200 1775
+[05/Mar/2026 12:38:17] "GET /api/portfolios/9/stocks/20/?range=1mo HTTP/1.1" 200 1775
+[05/Mar/2026 12:38:49] "GET /api/portfolios/9/ HTTP/1.1" 200 330
+[05/Mar/2026 12:38:49] "GET /api/portfolios/9/ HTTP/1.1" 200 330
+[05/Mar/2026 12:38:52] "GET /api/metals/analytics/?range=1mo HTTP/1.1" 200 12754
+[05/Mar/2026 12:38:53] "GET /api/metals/analytics/?range=1mo HTTP/1.1" 200 12754
+[05/Mar/2026 12:38:56] "GET /api/portfolios/9/ HTTP/1.1" 200 330
+[05/Mar/2026 12:38:56] "GET /api/portfolios/9/ HTTP/1.1" 200 330
+[05/Mar/2026 12:38:57] "GET /api/portfolios/9/stocks/20/?range=1mo HTTP/1.1" 200 1775
+[05/Mar/2026 12:38:57] "GET /api/portfolios/9/stocks/20/?range=1mo HTTP/1.1" 200 1775
+[05/Mar/2026 12:39:01] "GET /api/portfolios/9/ HTTP/1.1" 200 330
+[05/Mar/2026 12:39:01] "GET /api/portfolios/9/ HTTP/1.1" 200 330
+[05/Mar/2026 12:42:32] "OPTIONS /api/portfolios/9/analytics/ HTTP/1.1" 200 0
+Not Found: /api/portfolios/9/analytics/
+[05/Mar/2026 12:42:32] "GET /api/portfolios/9/analytics/ HTTP/1.1" 404 5439
+[05/Mar/2026 12:42:33] "GET /api/portfolios/9/ HTTP/1.1" 200 330
+[05/Mar/2026 12:43:49] "POST /api/login/ HTTP/1.1" 200 489
+[05/Mar/2026 12:43:49] "GET /api/me/ HTTP/1.1" 200 71
+[05/Mar/2026 12:43:49] "GET /api/portfolios/ HTTP/1.1" 200 151
+[05/Mar/2026 12:43:49] "GET /api/portfolios/ HTTP/1.1" 200 151
+[05/Mar/2026 12:44:01] "GET /api/metals/analytics/?range=1mo HTTP/1.1" 200 12754
+[05/Mar/2026 12:44:01] "GET /api/metals/analytics/?range=1mo HTTP/1.1" 200 12754
+[05/Mar/2026 12:44:18] "GET /api/portfolios/ HTTP/1.1" 200 151
+[05/Mar/2026 12:44:18] "GET /api/portfolios/ HTTP/1.1" 200 151
+Not Found: /api/portfolios/9/analytics/
+[05/Mar/2026 12:45:56] "GET /api/portfolios/9/analytics/ HTTP/1.1" 404 5439
+[05/Mar/2026 12:45:56,859] - Broken pipe from ('127.0.0.1', 53120)
