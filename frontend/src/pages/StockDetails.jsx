@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
+import Navbar from "../components/Navbar";
 import StockMetricCards from "../components/StockMetricCards";
 import StockPriceChart from "../components/StockPriceChart";
 import { getStockDetails } from "../services/stockService";
 
-const RANGES = ["1d", "7d", "1mo", "3mo", "6mo", "1y"];
+const RANGES = ["1d", "7d", "1mo", "3mo", "6mo", "1y", "3y"];
 
 function StockDetails() {
-  const { portfolioId, stockId } = useParams();
+  const { portfolioId: routePortfolioId, stockId } = useParams();
+  const location = useLocation();
+  const portfolioId = routePortfolioId || location.state?.portfolioId || null;
   const [range, setRange] = useState("1mo");
   const [stock, setStock] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -33,6 +36,7 @@ function StockDetails() {
   if (loading) {
     return (
       <main className="app-shell">
+        <Navbar />
         <p>Loading stock details...</p>
       </main>
     );
@@ -41,9 +45,10 @@ function StockDetails() {
   if (error) {
     return (
       <main className="app-shell">
+        <Navbar />
         <p className="error-text">{error}</p>
-        <Link className="back-link" to={`/portfolio/${portfolioId}`}>
-          Back to portfolio
+        <Link className="back-link" to={portfolioId ? `/portfolio/${portfolioId}` : "/dashboard"}>
+          Back
         </Link>
       </main>
     );
@@ -51,15 +56,17 @@ function StockDetails() {
 
   return (
     <main className="app-shell">
+      <Navbar />
+
       <section className="hero compact">
         <p className="kicker">Stock Details</p>
         <h1>{stock.name}</h1>
         <p className="subtitle">
-          {stock.symbol} {stock.exchange ? `| ${stock.exchange}` : ""}{" "}
-          {stock.sector ? `| ${stock.sector}` : ""}
+          {stock.symbol} {stock.exchange ? `| ${stock.exchange}` : ""}
+          {stock.sector ? ` | ${stock.sector}` : ""}
         </p>
-        <Link className="back-link" to={`/portfolio/${portfolioId}`}>
-          Back to portfolio
+        <Link className="back-link" to={portfolioId ? `/portfolio/${portfolioId}` : "/dashboard"}>
+          Back
         </Link>
       </section>
 

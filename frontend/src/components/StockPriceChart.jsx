@@ -1,11 +1,12 @@
 import { useState } from "react";
 
 function StockPriceChart({ points }) {
+  const [hoverIndex, setHoverIndex] = useState(null);
+
   if (!points.length) {
     return <p className="empty-state">No chart data available for this range.</p>;
   }
 
-  const [hoverIndex, setHoverIndex] = useState(null);
   const width = 980;
   const height = 280;
   const padding = 30;

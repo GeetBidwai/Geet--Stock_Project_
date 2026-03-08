@@ -1,5 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
+import CryptoPage from "./pages/Crypto";
+import FeaturesPage from "./pages/Features";
 import LandingPage from "./pages/Home";
 import LoginPage from "./pages/Login";
 import MetalsPage from "./pages/Metals";
@@ -12,8 +14,9 @@ function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route
-        path="/"
+        path="/dashboard"
         element={
           <ProtectedRoute>
             <LandingPage />
@@ -41,6 +44,30 @@ function App() {
         element={
           <ProtectedRoute>
             <StockDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stock/:stockId"
+        element={
+          <ProtectedRoute>
+            <StockDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/crypto"
+        element={
+          <ProtectedRoute>
+            <CryptoPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/features"
+        element={
+          <ProtectedRoute>
+            <FeaturesPage />
           </ProtectedRoute>
         }
       />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 
 function Signup() {
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ function Signup() {
   const [loading, setLoading] = useState(false);
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleSubmit = async (event) => {
@@ -24,7 +24,7 @@ function Signup() {
       setLoading(true);
       setError("");
       await signupUser(formData);
-      navigate("/");
+      navigate("/dashboard");
     } catch {
       setError("Signup failed. Username or employee ID may already exist.");
     } finally {

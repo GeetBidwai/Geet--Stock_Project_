@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 
 function Login() {
   const navigate = useNavigate();
@@ -11,7 +11,7 @@ function Login() {
   const [loading, setLoading] = useState(false);
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleSubmit = async (event) => {
@@ -20,7 +20,7 @@ function Login() {
       setLoading(true);
       setError("");
       await loginUser({ username, password });
-      navigate("/");
+      navigate("/dashboard");
     } catch {
       setError("Invalid credentials.");
     } finally {

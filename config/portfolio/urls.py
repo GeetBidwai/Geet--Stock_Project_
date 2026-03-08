@@ -1,18 +1,36 @@
 from django.urls import path
 from .views import (
+    CryptoForecastAPIView,
+    DashboardSummaryAPIView,
     MetalsAnalyticsAPIView,
     PortfolioDetailAPIView,
     PortfolioListAPIView,
+    PortfolioRiskClusterAPIView,
+    PortfolioTopDiscountAPIView,
+    PortfolioTopGrowthAPIView,
+    StockCollectionAPIView,
+    StockDeleteAPIView,
     StockDetailAPIView,
+    StockHistoryAPIView,
     StockByPortfolioAPIView,
     StockSuggestionAPIView,
 )
 
 urlpatterns = [
+    path('dashboard/summary/', DashboardSummaryAPIView.as_view()),
     path('portfolios/', PortfolioListAPIView.as_view()),
     path('portfolios/<int:portfolio_id>/', PortfolioDetailAPIView.as_view()),
+    path('portfolios/<int:portfolio_id>/top-discount/', PortfolioTopDiscountAPIView.as_view()),
+    path('portfolios/<int:portfolio_id>/top-growth/', PortfolioTopGrowthAPIView.as_view()),
+    path('portfolios/<int:portfolio_id>/risk-clusters/', PortfolioRiskClusterAPIView.as_view()),
     path('portfolios/<int:portfolio_id>/stocks/', StockByPortfolioAPIView.as_view()),
     path('portfolios/<int:portfolio_id>/stocks/<int:stock_id>/', StockDetailAPIView.as_view()),
+    path('stocks/', StockCollectionAPIView.as_view()),
+    path('stocks/<int:stock_id>/', StockDeleteAPIView.as_view()),
+    path('stocks/<int:stock_id>/history/', StockHistoryAPIView.as_view()),
+    path('stocks/search/', StockSuggestionAPIView.as_view()),
     path('stocks/suggest/', StockSuggestionAPIView.as_view()),
+    path('metals/history/', MetalsAnalyticsAPIView.as_view()),
     path('metals/analytics/', MetalsAnalyticsAPIView.as_view()),
+    path('crypto/btc/forecast/', CryptoForecastAPIView.as_view()),
 ]

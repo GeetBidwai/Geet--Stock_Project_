@@ -35,7 +35,7 @@ function StockTable({ stocks, onRemove, onStockClick }) {
               onClick={() => onStockClick?.(stock.id)}
             >
               <td>{stock.name}</td>
-              <td>{stock.stock_id}</td>
+              <td>{stock.ticker || stock.stock_id}</td>
               <td>{stock.sector || "-"}</td>
               <td>{formatValue(stock.current_price)}</td>
               <td>{formatValue(stock.pe_ratio)}</td>

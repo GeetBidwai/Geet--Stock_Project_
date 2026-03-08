@@ -2,6 +2,7 @@ from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
@@ -11,19 +12,17 @@ from rest_framework.response import Response
 User = get_user_model()
 
 
-@api_view(['GET'])
-def api_root(request):
-    return Response({
-        "message": "API is running",
-        "endpoints": [
-            "/api/portfolios/",     
-            "/api/stocks/",
-            "/api/login/",
-            "/api/signup/",
-            "/api/me/",
-            "/api/logout/",
-        ]
-    })
+def _auth_payload(user):
+    token, _ = Token.objects.get_or_create(user=user)
+    return {
+        "token": token.key,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "employee_id": user.employee_id,
+        },
+    }
 
 
 @api_view(["POST"])
@@ -59,15 +58,7 @@ def signup(request):
         password=password,
     )
     auth_login(request, user)
-    return Response(
-        {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "employee_id": user.employee_id,
-        },
-        status=status.HTTP_201_CREATED,
-    )
+    return Response(_auth_payload(user), status=status.HTTP_201_CREATED)
 
 
 @api_view(["POST"])
@@ -90,19 +81,13 @@ def login(request):
         )
 
     auth_login(request, user)
-    return Response(
-        {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "employee_id": user.employee_id,
-        }
-    )
+    return Response(_auth_payload(user))
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout(request):
+    Token.objects.filter(user=request.user).delete()
     auth_logout(request)
     return Response({"detail": "Logged out successfully."})
 

@@ -11,6 +11,8 @@ const CARD_CONFIG = [
   { key: "current_price", label: "Current Price" },
   { key: "change_percent", label: "Change %" },
   { key: "pe_ratio", label: "P/E Ratio" },
+  { key: "eps", label: "EPS" },
+  { key: "intrinsic_value", label: "Intrinsic Value" },
   { key: "day_high", label: "Day High" },
   { key: "day_low", label: "Day Low" },
   { key: "fifty_two_week_high", label: "52W High" },

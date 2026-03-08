@@ -1,20 +1,16 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { getCurrentUser, login, signup } from "../services/authService";
+import { useEffect, useMemo, useState } from "react";
+import { getCurrentUser, login, logout, signup } from "../services/authService";
+import { AuthContext } from "./context";
 
-const AuthContext = createContext(null);
-
-const ACCESS_TOKEN_KEY = "stock_access_token";
-const REFRESH_TOKEN_KEY = "stock_refresh_token";
+const TOKEN_KEY = "stock_auth_token";
 const USER_KEY = "stock_user";
 
-function setSessionTokens(access, refresh) {
-  localStorage.setItem(ACCESS_TOKEN_KEY, access);
-  localStorage.setItem(REFRESH_TOKEN_KEY, refresh);
+function setSessionToken(token) {
+  localStorage.setItem(TOKEN_KEY, token);
 }
 
 function clearSession() {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
 }
 
@@ -31,7 +27,7 @@ function getInitialUser() {
 }
 
 function hasToken() {
-  return Boolean(localStorage.getItem(ACCESS_TOKEN_KEY));
+  return Boolean(localStorage.getItem(TOKEN_KEY));
 }
 
 export function AuthProvider({ children }) {
@@ -48,17 +44,28 @@ export function AuthProvider({ children }) {
 
   const signupUser = async (payload) => {
     const data = await signup(payload);
-    setSessionTokens(data.access, data.refresh);
-    await hydrateUser();
+    setSessionToken(data.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    setUser(data.user);
+    setIsAuthenticated(true);
   };
 
   const loginUser = async (payload) => {
     const data = await login(payload);
-    setSessionTokens(data.access, data.refresh);
-    await hydrateUser();
+    setSessionToken(data.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    setUser(data.user);
+    setIsAuthenticated(true);
   };
 
-  const logoutUser = () => {
+  const logoutUser = async () => {
+    try {
+      if (hasToken()) {
+        await logout();
+      }
+    } catch {
+      // Clear local session even if the API token is already invalid.
+    }
     clearSession();
     setUser(null);
     setIsAuthenticated(false);
@@ -91,12 +98,4 @@ export function AuthProvider({ children }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-  return context;
 }

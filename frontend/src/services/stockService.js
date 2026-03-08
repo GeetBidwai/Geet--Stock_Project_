@@ -1,7 +1,7 @@
 import http from "./http";
 
 export async function getStockSuggestions(query) {
-  const response = await http.get("/stocks/suggest/", {
+  const response = await http.get("/stocks/search/", {
     params: { q: query },
   });
   return response.data;
@@ -17,11 +17,18 @@ export async function addStockToPortfolio(portfolioId, stockChoice) {
 }
 
 export async function removeStockFromPortfolio(portfolioId, stockId) {
-  await http.delete(`/portfolios/${portfolioId}/stocks/${stockId}/`);
+  if (portfolioId) {
+    await http.delete(`/portfolios/${portfolioId}/stocks/${stockId}/`);
+    return;
+  }
+  await http.delete(`/stocks/${stockId}/`);
 }
 
 export async function getStockDetails(portfolioId, stockId, range = "1mo") {
-  const response = await http.get(`/portfolios/${portfolioId}/stocks/${stockId}/`, {
+  const targetUrl = portfolioId
+    ? `/portfolios/${portfolioId}/stocks/${stockId}/`
+    : `/stocks/${stockId}/history/`;
+  const response = await http.get(targetUrl, {
     params: { range },
   });
   return response.data;

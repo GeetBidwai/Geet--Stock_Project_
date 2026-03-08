@@ -54,6 +54,8 @@ a {
 .top-nav-links {
   display: flex;
   gap: 0.8rem;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .top-nav-links a {
@@ -159,6 +161,7 @@ h2 {
 }
 
 input,
+select,
 button {
   border-radius: 10px;
   border: 1px solid var(--border);
@@ -183,6 +186,40 @@ button:hover {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 0.85rem;
+}
+
+.summary-grid {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.85rem;
+}
+
+.summary-card {
+  min-height: 110px;
+}
+
+.summary-card .hint-text {
+  display: block;
+  margin-top: 0.4rem;
+}
+
+.chart-grid {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.chart-card {
+  border: 1px solid #efdfcb;
+  border-radius: 14px;
+  padding: 0.9rem;
+  background: #ffffffd6;
+}
+
+.chart-card h3 {
+  margin-top: 0;
 }
 
 .portfolio-card {
@@ -305,6 +342,22 @@ th {
   flex-wrap: wrap;
   gap: 0.45rem;
   margin-bottom: 0.7rem;
+}
+
+.control-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.control-row label {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.control-row span {
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 .range-btn {
@@ -444,6 +497,20 @@ th {
   font-size: 1.1rem;
 }
 
+.risk-plot-wrap {
+  margin-top: 1rem;
+  border: 1px solid #efdfcb;
+  border-radius: 12px;
+  padding: 0.75rem;
+  background: #fffdf8;
+}
+
+.risk-plot {
+  width: 100%;
+  display: block;
+  border-radius: 10px;
+}
+
 @keyframes fade-up {
   from {
     opacity: 0;
@@ -458,6 +525,10 @@ th {
 @media (max-width: 760px) {
   .inline-form {
     grid-template-columns: 1fr;
+  }
+
+  .control-row {
+    flex-direction: column;
   }
 
   .app-shell {
