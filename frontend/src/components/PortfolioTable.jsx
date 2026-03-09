@@ -7,6 +7,13 @@ function formatNumber(value, digits = 2) {
   return Number(value).toFixed(digits);
 }
 
+function formatCurrencyOrDash(value, currency) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "-";
+  }
+  return formatCurrency(value, currency);
+}
+
 function PortfolioTable({ rows, totalValue, onRemove }) {
   if (!rows.length) {
     return <div className="empty-state-card">No positions yet. Create one from the builder above.</div>;
@@ -21,11 +28,11 @@ function PortfolioTable({ rows, totalValue, onRemove }) {
               <th>Symbol</th>
               <th>Company</th>
               <th>Quantity</th>
-              <th>Buy Price</th>
+              <th>Prev Close</th>
               <th>Current Price</th>
               <th>P/E Ratio</th>
               <th>Discount %</th>
-              <th>Profit/Loss</th>
+              <th>Price Change</th>
               <th>Position Value</th>
               <th>Actions</th>
             </tr>
@@ -36,12 +43,20 @@ function PortfolioTable({ rows, totalValue, onRemove }) {
                 <td>{row.symbol}</td>
                 <td>{row.company}</td>
                 <td>{row.quantity}</td>
-                <td>{formatCurrency(row.buyPrice, row.currency)}</td>
+                <td>{formatCurrencyOrDash(row.buyPrice, row.currency)}</td>
                 <td>{formatCurrency(row.currentPrice, row.currency)}</td>
                 <td>{formatNumber(row.peRatio)}</td>
                 <td>{formatNumber(row.discountPercent)}%</td>
-                <td className={row.profitLoss >= 0 ? "profit" : "loss"}>
-                  {formatCurrency(row.profitLoss, row.currency)}
+                <td
+                  className={
+                    row.profitLoss === null || row.profitLoss === undefined || Number.isNaN(row.profitLoss)
+                      ? ""
+                      : row.profitLoss >= 0
+                        ? "profit"
+                        : "loss"
+                  }
+                >
+                  {formatCurrencyOrDash(row.profitLoss, row.currency)}
                 </td>
                 <td>{formatCurrency(row.positionValue, row.currency)}</td>
                 <td>

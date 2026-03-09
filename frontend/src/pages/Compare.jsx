@@ -67,9 +67,9 @@ function Compare() {
       <section className="page-header">
         <div>
           <p className="eyebrow">Compare</p>
-          <h1>Compare two tracked stocks side by side</h1>
+          <h1>Compare tracked positions across price, trend, and valuation</h1>
           <p className="section-copy">
-            Select two positions from your tracked holdings and review price, performance, and P/E signals.
+            Select two holdings from your portfolio to review current price, movement profile, and P/E ratio in one side-by-side view.
           </p>
         </div>
         <div className="compare-selectors">

@@ -92,10 +92,42 @@ function deriveDiscountPercent(stock, currentPrice, benchmarkPe) {
     return clamp((opportunityScore - 50) * 0.7, -40, 40);
   }
 
-  return ((symbolHash(stock.ticker || stock.stock_id || stock.name) % 1601) / 100) - 8;
+  const fallback = ((symbolHash(stock.ticker || stock.stock_id || stock.name) % 1601) / 100) - 8;
+  if (Math.abs(fallback) <= 0.5) {
+    return fallback >= 0 ? 1.25 : -1.25;
+  }
+  return fallback;
 }
 
-function deriveBuyPrice({ positionMeta, currentPrice, symbol, discountPercent, opportunityScore }) {
+function derivePreviousClose(stock, currentPrice) {
+  const directPreviousClose = Number(
+    stock.previous_close ??
+      stock.prev_close ??
+      stock.previousClose ??
+      stock.regularMarketPreviousClose ??
+      0
+  );
+
+  if (Number.isFinite(directPreviousClose) && directPreviousClose > 0) {
+    return directPreviousClose;
+  }
+
+  const changePercent = Number(stock.change_percent ?? stock.changePercent ?? 0);
+  if (Number.isFinite(changePercent) && Math.abs(changePercent) > EPSILON && currentPrice > 0) {
+    return currentPrice / (1 + changePercent / 100);
+  }
+
+  return null;
+}
+
+function deriveReferencePrice({
+  positionMeta,
+  currentPrice,
+  symbol,
+  discountPercent,
+  opportunityScore,
+  previousClose,
+}) {
   const storedBuyPrice = Number(positionMeta.buyPrice);
   const hasManualBuyPrice = positionMeta.isBuyPriceManual === true;
 
@@ -106,8 +138,12 @@ function deriveBuyPrice({ positionMeta, currentPrice, symbol, discountPercent, o
     }
   }
 
+  if (previousClose && previousClose > 0) {
+    return Number(previousClose.toFixed(2));
+  }
+
   if (!(currentPrice > 0)) {
-    return 0;
+    return null;
   }
 
   const momentumSeed = symbolHash(symbol);
@@ -188,15 +224,20 @@ export async function loadPortfolioDataset() {
       const benchmarkPe =
         peBenchmarks.sector[portfolio.sector || "Market"] || peBenchmarks.global || 0;
       const discountPercent = deriveDiscountPercent(stock, currentPrice, benchmarkPe);
-      const buyPrice = deriveBuyPrice({
+      const previousClose = derivePreviousClose(stock, currentPrice);
+      const buyPrice = deriveReferencePrice({
         positionMeta,
         currentPrice,
         symbol: stock.ticker || stock.stock_id || stock.name,
         discountPercent,
         opportunityScore: Number(stock.opportunity_score || 0),
+        previousClose,
       });
       const currency = positionMeta.currency || "USD";
-      const profitLoss = (currentPrice - buyPrice) * quantity;
+      const profitLoss =
+        buyPrice !== null && buyPrice !== undefined
+          ? (currentPrice - buyPrice) * quantity
+          : null;
       const positionValue = currentPrice * quantity;
 
       return {
@@ -213,6 +254,13 @@ export async function loadPortfolioDataset() {
         discountPercent: Number(discountPercent.toFixed(2)),
         opportunityScore: Number(stock.opportunity_score || 0),
         profitLoss,
+        marketChangePercent: Number(
+          stock.change_percent ?? stock.changePercent ?? (
+            previousClose && previousClose > 0
+              ? (((currentPrice - previousClose) / previousClose) * 100).toFixed(2)
+              : Number.NaN
+          )
+        ),
         positionValue,
         currency,
         country: positionMeta.country || "USA",

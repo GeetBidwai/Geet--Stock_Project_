@@ -7,30 +7,44 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { generateGrowthData } from "../charts/portfolioGrowthData";
+import { formatCurrency } from "../charts/portfolioData";
 
-function PortfolioGrowth({ portfolioValue }) {
-  const growthData = generateGrowthData(portfolioValue);
-
+function PortfolioGrowth({ data }) {
   return (
-    <ResponsiveContainer width="100%" height={350}>
-      <LineChart data={growthData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="day" />
-        <YAxis domain={["auto", "auto"]} />
-        <Tooltip />
+    <ResponsiveContainer width="100%" height={360}>
+      <LineChart data={data} margin={{ top: 12, right: 16, left: 12, bottom: 12 }}>
+        <CartesianGrid stroke="#dbe3ee" vertical={false} />
+        <XAxis
+          dataKey="day"
+          tick={{ fontSize: 11, fill: "#64748b" }}
+          tickLine={false}
+          axisLine={{ stroke: "#cbd5e1" }}
+          minTickGap={16}
+        />
+        <YAxis
+          domain={["auto", "auto"]}
+          tick={{ fontSize: 11, fill: "#64748b" }}
+          tickLine={false}
+          axisLine={{ stroke: "#cbd5e1" }}
+          tickFormatter={(value) => `$${Number(value).toLocaleString("en-US", { maximumFractionDigits: 0 })}`}
+          width={86}
+        />
+        <Tooltip
+          formatter={(value) => formatCurrency(Number(value), "USD")}
+          labelFormatter={(label) => `Period: ${label}`}
+        />
         <Line
           type="monotone"
           dataKey="actual"
-          stroke="#2563eb"
+          stroke="#1d4ed8"
           strokeWidth={3}
           dot={false}
         />
         <Line
           type="monotone"
           dataKey="predicted"
-          stroke="#10b981"
-          strokeDasharray="5 5"
+          stroke="#0f766e"
+          strokeDasharray="6 6"
           strokeWidth={3}
           dot={false}
         />

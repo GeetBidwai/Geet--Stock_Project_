@@ -90,7 +90,7 @@ function Dashboard() {
 
   const rows = dataset.rows;
   const totalValue = dataset.totalValue;
-  const profitLoss = rows.reduce((sum, row) => sum + row.profitLoss, 0);
+  const profitLoss = rows.reduce((sum, row) => sum + (Number(row.profitLoss) || 0), 0);
 
   const chartRows = useMemo(() => rows.slice(0, 8), [rows]);
 
@@ -98,7 +98,7 @@ function Dashboard() {
     () => ({
       profitLoss: chartRows.map((row) => ({
         name: row.symbol,
-        value: Number(row.profitLoss.toFixed(2)),
+        value: Number((row.profitLoss || 0).toFixed(2)),
       })),
       discount: chartRows.map((row) => ({
         name: row.symbol,
@@ -303,7 +303,7 @@ function Dashboard() {
         <section className="tv-card summary-stack">
           <StatCard label="Total Portfolio Value" value={formatCurrency(totalValue, "USD")} />
           <StatCard
-            label="Profit / Loss"
+            label="Market Move"
             value={formatCurrency(profitLoss, "USD")}
             tone={profitLoss >= 0 ? "positive" : "negative"}
           />
@@ -331,7 +331,7 @@ function Dashboard() {
       </section>
 
       <section className="analytics-grid dashboard-grid dashboard-section">
-        <ChartCard title="Profit / Loss" subtitle="Position-level profit contribution.">
+        <ChartCard title="Price Change" subtitle="Position-level move versus previous close.">
           <ProfitLossChart data={analyticsData.profitLoss} />
         </ChartCard>
 

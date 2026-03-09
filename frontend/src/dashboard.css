@@ -65,6 +65,72 @@
   margin-top: 16px;
 }
 
+.ml-analysis-table-card {
+  overflow: hidden;
+  padding: 24px;
+}
+
+.ml-analysis-table-card .section-head {
+  margin-bottom: 16px;
+}
+
+.ml-analysis-table-card .table-wrap,
+.ml-analysis-table-card .portfolio-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+}
+
+.ml-analysis-table-card .portfolio-table {
+  min-width: 980px;
+}
+
+.growth-section {
+  padding: 24px;
+}
+
+.growth-head {
+  margin-bottom: 18px;
+}
+
+.growth-chart-shell {
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 18px 18px 10px;
+  background: linear-gradient(180deg, #fbfdff 0%, #f8fafc 100%);
+}
+
+.growth-stats-grid {
+  margin-top: 24px;
+  gap: 20px;
+}
+
+.growth-stats-grid .stat-card {
+  min-height: 148px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.growth-stats-grid .stat-card h3 {
+  margin-top: 10px;
+  line-height: 1.15;
+}
+
+.bitcoin-stats-grid {
+  gap: 20px;
+}
+
+.bitcoin-stats-grid .stat-card {
+  min-height: 0;
+  padding: 18px 20px;
+}
+
+.bitcoin-stats-grid .stat-card h3 {
+  margin-top: 8px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 900px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
@@ -72,5 +138,17 @@
 
   .dashboard-table-card {
     padding: 18px;
+  }
+
+  .ml-analysis-table-card {
+    padding: 18px;
+  }
+
+  .growth-section {
+    padding: 18px;
+  }
+
+  .growth-chart-shell {
+    padding: 14px 14px 8px;
   }
 }

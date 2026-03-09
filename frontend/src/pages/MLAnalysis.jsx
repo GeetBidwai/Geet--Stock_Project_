@@ -3,6 +3,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  LabelList,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -82,10 +83,16 @@ function MLAnalysis() {
       return [];
     }
 
+    const currentValue = selectedRow.actualTotal;
+    const futureValue = selectedRow.predictedFutureTotal;
+    const spread = futureValue - currentValue;
+
     return [
-      { step: "Current", value: selectedRow.actualTotal },
-      { step: "Midpoint", value: Number(((selectedRow.actualTotal + selectedRow.predictedFutureTotal) / 2).toFixed(2)) },
-      { step: "Future", value: selectedRow.predictedFutureTotal },
+      { step: "Current", value: currentValue },
+      { step: "Q1", value: Number((currentValue + spread * 0.2).toFixed(2)) },
+      { step: "Midpoint", value: Number((currentValue + spread * 0.45).toFixed(2)) },
+      { step: "Q3", value: Number((currentValue + spread * 0.72).toFixed(2)) },
+      { step: "Future", value: futureValue },
     ];
   }, [selectedRow]);
 
@@ -117,26 +124,62 @@ function MLAnalysis() {
 
       {!loading ? (
         <>
-          <section className="analytics-grid">
+          <section className="analytics-grid dashboard-section">
             <ChartCard title="KNN Clustering" subtitle="Volatility versus Sharpe ratio clustering view.">
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={300}>
                 <ScatterChart>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="volatility" name="Volatility" />
-                  <YAxis dataKey="sharpeRatio" name="Sharpe Ratio" />
+                  <CartesianGrid stroke="#dbe3ee" vertical={false} />
+                  <XAxis
+                    type="number"
+                    dataKey="volatility"
+                    name="Volatility"
+                    tick={{ fontSize: 11, fill: "#64748b" }}
+                    tickFormatter={(value) => `${Number(value).toFixed(0)}%`}
+                    domain={["dataMin - 2", "dataMax + 2"]}
+                    axisLine={{ stroke: "#cbd5e1" }}
+                    tickLine={false}
+                    height={42}
+                  />
+                  <YAxis
+                    type="number"
+                    dataKey="sharpeRatio"
+                    name="Sharpe Ratio"
+                    tick={{ fontSize: 11, fill: "#64748b" }}
+                    domain={["auto", "auto"]}
+                    axisLine={{ stroke: "#cbd5e1" }}
+                    tickLine={false}
+                    width={58}
+                  />
                   <Tooltip cursor={{ strokeDasharray: "3 3" }} />
-                  <Scatter data={analysisRows} fill="#1d4ed8" />
+                  <Scatter data={analysisRows} fill="#1d4ed8">
+                    <LabelList dataKey="symbol" position="top" fontSize={10} fill="#64748b" />
+                  </Scatter>
                 </ScatterChart>
               </ResponsiveContainer>
             </ChartCard>
 
             <ChartCard title="Linear Regression" subtitle="Actual totals versus predicted future totals.">
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={analysisRows}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="symbol" />
-                  <YAxis />
-                  <Tooltip />
+                  <CartesianGrid stroke="#dbe3ee" vertical={false} />
+                  <XAxis
+                    dataKey="symbol"
+                    interval={0}
+                    height={56}
+                    tick={{ fontSize: 11, fill: "#64748b" }}
+                    axisLine={{ stroke: "#cbd5e1" }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "#64748b" }}
+                    axisLine={{ stroke: "#cbd5e1" }}
+                    tickLine={false}
+                    tickFormatter={(value) =>
+                      `$${Number(value).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
+                    }
+                    width={76}
+                  />
+                  <Tooltip formatter={(value) => formatCurrency(value, "USD")} />
                   <Bar dataKey="actualTotal" fill="#0f766e" radius={[8, 8, 0, 0]} />
                   <Bar dataKey="predictedFutureTotal" fill="#1d4ed8" radius={[8, 8, 0, 0]} />
                 </BarChart>
@@ -144,19 +187,40 @@ function MLAnalysis() {
             </ChartCard>
 
             <ChartCard title="ARIMA Forecast" subtitle="Forward-looking value trajectory for the selected stock.">
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={selectedSeries}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="step" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="value" stroke="#7c3aed" strokeWidth={3} />
+                  <CartesianGrid stroke="#dbe3ee" vertical={false} />
+                  <XAxis
+                    dataKey="step"
+                    tick={{ fontSize: 11, fill: "#64748b" }}
+                    axisLine={{ stroke: "#cbd5e1" }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    domain={["auto", "auto"]}
+                    tick={{ fontSize: 11, fill: "#64748b" }}
+                    axisLine={{ stroke: "#cbd5e1" }}
+                    tickLine={false}
+                    tickFormatter={(value) =>
+                      `$${Number(value).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
+                    }
+                    width={76}
+                  />
+                  <Tooltip formatter={(value) => formatCurrency(value, "USD")} />
+                  <Line
+                    type="linear"
+                    dataKey="value"
+                    stroke="#7c3aed"
+                    strokeWidth={3}
+                    dot={{ r: 4, strokeWidth: 2, fill: "#ffffff" }}
+                    activeDot={{ r: 6 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
           </section>
 
-          <section className="tv-card">
+          <section className="tv-card dashboard-section ml-analysis-table-card">
             <div className="section-head">
               <div>
                 <h2>Analysis Table</h2>
@@ -165,7 +229,7 @@ function MLAnalysis() {
                 </p>
               </div>
             </div>
-            <div className="table-wrap">
+            <div className="portfolio-table-wrapper table-wrap">
               <table className="portfolio-table">
                 <thead>
                   <tr>

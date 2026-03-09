@@ -16,6 +16,10 @@ import { formatCurrency, loadPortfolioDataset } from "../charts/portfolioData";
 
 const chartColors = ["#1d4ed8", "#0f766e", "#f59e0b", "#7c3aed", "#db2777", "#0891b2"];
 
+function renderSectorLabel({ name, percent }) {
+  return `${name.length > 14 ? `${name.slice(0, 14)}...` : name} ${(percent * 100).toFixed(0)}%`;
+}
+
 function Growth() {
   const [dataset, setDataset] = useState({ portfolios: [], rows: [], totalValue: 0 });
   const [loading, setLoading] = useState(true);
@@ -52,6 +56,12 @@ function Growth() {
     null
   );
   const futureValue = projectionSeries.at(-1)?.predicted || 0;
+  const minimumValue = projectionSeries.length
+    ? Math.min(...projectionSeries.map((item) => Math.min(item.actual || 0, item.predicted || 0)))
+    : 0;
+  const maximumValue = projectionSeries.length
+    ? Math.max(...projectionSeries.map((item) => Math.max(item.actual || 0, item.predicted || 0)))
+    : 0;
   const peAverage =
     rows.length > 0
       ? rows.reduce((sum, row) => sum + row.peRatio, 0) / rows.length
@@ -75,35 +85,37 @@ function Growth() {
 
       {!loading ? (
         <>
-          <ChartCard
-            title="Portfolio Growth"
-            subtitle="Actual portfolio value versus predicted future value."
-          >
-            <PortfolioGrowth portfolioValue={dataset.totalValue} />
-          </ChartCard>
+          <section className="tv-card growth-section dashboard-section">
+            <div className="section-head growth-head">
+              <div>
+                <h2>Portfolio Growth</h2>
+                <p className="section-copy">
+                  Actual portfolio value versus predicted future value.
+                </p>
+              </div>
+            </div>
 
-          <section className="stats-grid dashboard-section">
-            <StatCard label="Total Portfolio Value" value={formatCurrency(dataset.totalValue, "USD")} />
-            <StatCard
-              label="Profit / Loss"
-              value={formatCurrency(rows.reduce((sum, row) => sum + row.profitLoss, 0), "USD")}
-              tone="positive"
-            />
-            <StatCard label="Future Portfolio Value" value={formatCurrency(futureValue, "USD")} />
-            <StatCard
-              label="Minimum Value"
-              value={formatCurrency(Math.min(...projectionSeries.map((item) => item.predicted || item.actual || 0), 0), "USD")}
-            />
-            <StatCard
-              label="Maximum Value"
-              value={formatCurrency(Math.max(...projectionSeries.map((item) => item.predicted || item.actual || 0), 0), "USD")}
-            />
-            <StatCard label="Average P/E Ratio" value={peAverage.toFixed(2)} />
-            <StatCard
-              label="Best Performing Stock"
-              value={bestStock ? bestStock.symbol : "-"}
-              hint={bestStock ? formatCurrency(bestStock.profitLoss, bestStock.currency) : "No data"}
-            />
+            <div className="growth-chart-shell">
+              <PortfolioGrowth data={projectionSeries} />
+            </div>
+
+            <section className="stats-grid growth-stats-grid">
+              <StatCard label="Total Portfolio Value" value={formatCurrency(dataset.totalValue, "USD")} />
+              <StatCard
+                label="Market Move"
+                value={formatCurrency(rows.reduce((sum, row) => sum + (Number(row.profitLoss) || 0), 0), "USD")}
+                tone="negative"
+              />
+              <StatCard label="Future Portfolio Value" value={formatCurrency(futureValue, "USD")} />
+              <StatCard label="Minimum Value" value={formatCurrency(minimumValue, "USD")} />
+              <StatCard label="Maximum Value" value={formatCurrency(maximumValue, "USD")} />
+              <StatCard label="Average P/E Ratio" value={peAverage.toFixed(2)} />
+              <StatCard
+                label="Best Performing Stock"
+                value={bestStock ? bestStock.symbol : "-"}
+                hint={bestStock ? formatCurrency(bestStock.profitLoss, bestStock.currency) : "No data"}
+              />
+            </section>
           </section>
 
           <ChartCard
@@ -112,13 +124,21 @@ function Growth() {
           >
             <ResponsiveContainer width="100%" height={320}>
               <PieChart>
-                <Pie data={sectorData} dataKey="value" nameKey="name" outerRadius={110} label>
+                <Pie
+                  data={sectorData}
+                  dataKey="value"
+                  nameKey="name"
+                  outerRadius={102}
+                  paddingAngle={2}
+                  labelLine={false}
+                  label={renderSectorLabel}
+                >
                   {sectorData.map((entry, index) => (
                     <Cell key={`${entry.name}-${index}`} fill={chartColors[index % chartColors.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
-                <Legend />
+                <Tooltip formatter={(value) => formatCurrency(value, "USD")} />
+                <Legend wrapperStyle={{ paddingTop: "18px", fontSize: "12px" }} />
               </PieChart>
             </ResponsiveContainer>
           </ChartCard>
