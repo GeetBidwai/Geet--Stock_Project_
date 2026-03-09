@@ -11,7 +11,7 @@ function Login() {
   const [loading, setLoading] = useState(false);
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/" replace />;
   }
 
   const handleSubmit = async (event) => {
@@ -20,7 +20,7 @@ function Login() {
       setLoading(true);
       setError("");
       await loginUser({ username, password });
-      navigate("/dashboard");
+      navigate("/");
     } catch (requestError) {
       if (requestError?.code === "ERR_NETWORK" || !requestError?.response) {
         setError("Backend unavailable. Start the Django server and try again.");

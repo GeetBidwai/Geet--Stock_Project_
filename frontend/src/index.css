@@ -170,12 +170,31 @@ button {
 
 .landing-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.25rem;
   align-items: stretch;
 }
 
+.landing-hero-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem 1.5rem 1.8rem;
+  margin-bottom: 1.25rem;
+}
+
+.landing-hero-banner .hero-copy {
+  margin-top: 0.5rem;
+}
+
+.landing-hero-button {
+  margin-top: 1rem;
+}
+
 .ticker-panel,
+.market-card,
 .hero-panel,
 .builder-card,
 .summary-stack,
@@ -191,6 +210,39 @@ button {
   flex-direction: column;
   justify-content: center;
   min-height: 480px;
+}
+
+.landing-middle-card {
+  min-height: 100%;
+}
+
+.landing-middle-card h2 {
+  margin-bottom: 0.6rem;
+}
+
+.market-overview-list,
+.market-signals-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.market-overview-row,
+.market-signal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-soft);
+}
+
+.market-overview-values {
+  display: grid;
+  justify-items: end;
+  gap: 0.15rem;
 }
 
 .hero-panel h1,
@@ -279,6 +331,45 @@ button {
 
 .ticker-symbol {
   font-weight: 700;
+}
+
+.selected-stock-section {
+  margin-top: 1.25rem;
+  padding: 1.5rem;
+}
+
+.selected-stock-panel {
+  width: 100%;
+  text-align: left;
+}
+
+.selected-stock-meta {
+  display: grid;
+  justify-items: end;
+  gap: 0.2rem;
+}
+
+.selected-stock-copy {
+  max-width: 640px;
+  margin: 0.35rem 0 0;
+}
+
+.selected-stock-price {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.landing-range-switch {
+  margin-top: 1rem;
+}
+
+.landing-box-grid {
+  align-items: stretch;
+}
+
+.equal-height-card {
+  height: 100%;
+  min-height: 510px;
 }
 
 .ticker-price {
@@ -633,48 +724,58 @@ h2 {
 
 .chart-wrap {
   border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 0.85rem;
-  background: #fbfdff;
+  border-radius: 20px;
+  padding: 1.1rem 1rem 0.9rem;
+  background: linear-gradient(180deg, #fbfdff 0%, #f8fafc 100%);
 }
 
 .price-chart {
   width: 100%;
-  height: 280px;
+  height: 340px;
 }
 
 .price-chart-line {
   fill: none;
   stroke-width: 3;
-  stroke-linejoin: round;
-  stroke-linecap: round;
+  stroke-linejoin: miter;
+  stroke-linecap: butt;
 }
 
 .chart-grid-line {
-  stroke: #dbe3ee;
-  stroke-dasharray: 4 5;
+  stroke: #d5e1f0;
+  stroke-dasharray: 0;
 }
 
 .chart-price-label,
 .chart-axis,
-.scatter-axis {
+.scatter-axis,
+.chart-time-label {
   fill: var(--muted);
   color: var(--muted);
   font-size: 0.82rem;
+}
+
+.chart-time-label {
+  font-size: 0.78rem;
 }
 
 .chart-axis,
 .scatter-axis {
   display: flex;
   justify-content: space-between;
-  margin-top: 0.5rem;
+  margin-top: 0.85rem;
 }
 
 .chart-latest-dot,
 .chart-hover-dot {
-  fill: #ffffff;
+  fill: #f8fafc;
   stroke: var(--primary);
   stroke-width: 2;
+}
+
+.chart-axis-line {
+  stroke: #cbd5e1;
+  stroke-width: 1.2;
 }
 
 .chart-hover-line {
@@ -757,6 +858,14 @@ h2 {
   .builder-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .selected-stock-meta {
+    justify-items: start;
+  }
+
+  .selected-stock-section {
+    padding: 1rem;
   }
 
   .builder-form,

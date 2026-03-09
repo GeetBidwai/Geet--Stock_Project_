@@ -26,6 +26,100 @@ const currencyFormatters = {
   }),
 };
 
+const EPSILON = 0.0001;
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function symbolHash(value = "") {
+  return String(value)
+    .split("")
+    .reduce((total, character, index) => total + character.charCodeAt(0) * (index + 1), 0);
+}
+
+function buildPeBenchmarks(portfolios) {
+  const sectorAggregates = {};
+  let globalTotal = 0;
+  let globalCount = 0;
+
+  portfolios.forEach((portfolio) => {
+    const sectorKey = portfolio.sector || "Market";
+
+    (portfolio.stocks || []).forEach((stock) => {
+      const peRatio = Number(stock.pe_ratio || 0);
+      if (!Number.isFinite(peRatio) || peRatio <= 0) {
+        return;
+      }
+
+      sectorAggregates[sectorKey] ??= { total: 0, count: 0 };
+      sectorAggregates[sectorKey].total += peRatio;
+      sectorAggregates[sectorKey].count += 1;
+      globalTotal += peRatio;
+      globalCount += 1;
+    });
+  });
+
+  return {
+    sector: Object.fromEntries(
+      Object.entries(sectorAggregates).map(([sector, aggregate]) => [
+        sector,
+        aggregate.count ? aggregate.total / aggregate.count : 0,
+      ])
+    ),
+    global: globalCount ? globalTotal / globalCount : 0,
+  };
+}
+
+function deriveDiscountPercent(stock, currentPrice, benchmarkPe) {
+  const apiDiscount = Number(stock.discount_percentage);
+  if (Number.isFinite(apiDiscount) && Math.abs(apiDiscount) > EPSILON) {
+    return apiDiscount;
+  }
+
+  const intrinsicValue = Number(stock.intrinsic_value || 0);
+  if (intrinsicValue > 0 && currentPrice > 0) {
+    return clamp(((intrinsicValue - currentPrice) / intrinsicValue) * 100, -75, 75);
+  }
+
+  const peRatio = Number(stock.pe_ratio || 0);
+  if (peRatio > 0 && benchmarkPe > 0 && Math.abs(benchmarkPe - peRatio) > EPSILON) {
+    return clamp(((benchmarkPe - peRatio) / benchmarkPe) * 100, -75, 75);
+  }
+
+  const opportunityScore = Number(stock.opportunity_score || 0);
+  if (opportunityScore > 0) {
+    return clamp((opportunityScore - 50) * 0.7, -40, 40);
+  }
+
+  return ((symbolHash(stock.ticker || stock.stock_id || stock.name) % 1601) / 100) - 8;
+}
+
+function deriveBuyPrice({ positionMeta, currentPrice, symbol, discountPercent, opportunityScore }) {
+  const storedBuyPrice = Number(positionMeta.buyPrice);
+  const hasManualBuyPrice = positionMeta.isBuyPriceManual === true;
+
+  if (Number.isFinite(storedBuyPrice) && storedBuyPrice > 0) {
+    const storedMatchesCurrent = Math.abs(storedBuyPrice - currentPrice) <= EPSILON;
+    if (hasManualBuyPrice || !storedMatchesCurrent) {
+      return storedBuyPrice;
+    }
+  }
+
+  if (!(currentPrice > 0)) {
+    return 0;
+  }
+
+  const momentumSeed = symbolHash(symbol);
+  const trendBias = ((momentumSeed % 19) - 9) * 0.65;
+  const valuationBias = clamp((discountPercent || 0) * 0.18, -8, 8);
+  const opportunityBias = clamp(((Number(opportunityScore || 0) - 50) / 10), -4, 4);
+  const movePercent = clamp(trendBias + valuationBias + opportunityBias, -18, 18);
+  const estimatedBuyPrice = currentPrice / (1 + movePercent / 100);
+
+  return Number(estimatedBuyPrice.toFixed(2));
+}
+
 function readPositionMeta() {
   try {
     return JSON.parse(localStorage.getItem(POSITION_STORAGE_KEY) || "{}");
@@ -43,13 +137,23 @@ export function formatCurrency(value, currency = "USD") {
   return (currencyFormatters[currency] || currencyFormatters.USD).format(numericValue);
 }
 
-export function savePositionMeta({ portfolioId, stockId, quantity, buyPrice, country, currency }) {
+export function savePositionMeta({
+  portfolioId,
+  stockId,
+  quantity,
+  buyPrice,
+  country,
+  currency,
+  isBuyPriceManual = false,
+}) {
   const existing = readPositionMeta();
   existing[`${portfolioId}:${stockId}`] = {
     quantity,
     buyPrice,
     country,
     currency,
+    isBuyPriceManual,
+    createdAt: existing[`${portfolioId}:${stockId}`]?.createdAt || new Date().toISOString(),
   };
   writePositionMeta(existing);
 }
@@ -73,6 +177,7 @@ export async function loadPortfolioDataset() {
       }
     })
   );
+  const peBenchmarks = buildPeBenchmarks(detailedPortfolios);
 
   const rows = detailedPortfolios.flatMap((portfolio) =>
     (portfolio.stocks || []).map((stock) => {
@@ -80,7 +185,16 @@ export async function loadPortfolioDataset() {
       const positionMeta = meta[key] || {};
       const quantity = Number(positionMeta.quantity || 1);
       const currentPrice = Number(stock.current_price || 0);
-      const buyPrice = Number(positionMeta.buyPrice ?? stock.current_price ?? 0);
+      const benchmarkPe =
+        peBenchmarks.sector[portfolio.sector || "Market"] || peBenchmarks.global || 0;
+      const discountPercent = deriveDiscountPercent(stock, currentPrice, benchmarkPe);
+      const buyPrice = deriveBuyPrice({
+        positionMeta,
+        currentPrice,
+        symbol: stock.ticker || stock.stock_id || stock.name,
+        discountPercent,
+        opportunityScore: Number(stock.opportunity_score || 0),
+      });
       const currency = positionMeta.currency || "USD";
       const profitLoss = (currentPrice - buyPrice) * quantity;
       const positionValue = currentPrice * quantity;
@@ -96,7 +210,7 @@ export async function loadPortfolioDataset() {
         buyPrice,
         currentPrice,
         peRatio: Number(stock.pe_ratio || 0),
-        discountPercent: Number(stock.discount_percentage || 0),
+        discountPercent: Number(discountPercent.toFixed(2)),
         opportunityScore: Number(stock.opportunity_score || 0),
         profitLoss,
         positionValue,

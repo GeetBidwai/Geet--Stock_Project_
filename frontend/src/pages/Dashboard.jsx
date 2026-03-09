@@ -31,6 +31,14 @@ const sectorOptions = [
   "Energy",
   "Industrial",
 ];
+
+const compactXAxisProps = {
+  dataKey: "name",
+  interval: 0,
+  height: 56,
+  tick: { fontSize: 11, fill: "#64748b" },
+};
+
 function Dashboard() {
   const [dataset, setDataset] = useState({ portfolios: [], rows: [], totalValue: 0 });
   const [loading, setLoading] = useState(true);
@@ -311,7 +319,7 @@ function Dashboard() {
         </section>
       </section>
 
-      <section className="tv-card dashboard-section">
+      <section className="tv-card dashboard-section dashboard-table-card">
         <div className="section-head">
           <div>
             <h2>Portfolio Table</h2>
@@ -331,7 +339,7 @@ function Dashboard() {
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={analyticsData.discount}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
+              <XAxis {...compactXAxisProps} />
               <YAxis domain={["auto", "auto"]} />
               <Tooltip />
               <Bar dataKey="value" fill="#0f766e" minPointSize={5} radius={[8, 8, 0, 0]} />
@@ -343,7 +351,7 @@ function Dashboard() {
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={analyticsData.opportunity}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
+              <XAxis {...compactXAxisProps} />
               <YAxis domain={["auto", "auto"]} />
               <Tooltip />
               <Bar dataKey="value" fill="#f59e0b" minPointSize={5} radius={[8, 8, 0, 0]} />
@@ -355,7 +363,7 @@ function Dashboard() {
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={analyticsData.peRatio}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
+              <XAxis {...compactXAxisProps} />
               <YAxis domain={["auto", "auto"]} />
               <Tooltip />
               <Bar dataKey="value" fill="#7c3aed" minPointSize={5} radius={[8, 8, 0, 0]} />

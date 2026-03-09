@@ -40,8 +40,37 @@
   border-collapse: collapse;
 }
 
+.dashboard-table-card {
+  overflow: hidden;
+  padding: 24px;
+}
+
+.dashboard-table-card .table-card {
+  width: 100%;
+  margin-top: 16px;
+  margin-bottom: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.dashboard-table-card .table-wrap,
+.dashboard-table-card .portfolio-table-wrapper {
+  width: 100%;
+  max-width: 100%;
+}
+
+.dashboard-table-card .table-total {
+  margin-top: 16px;
+}
+
 @media (max-width: 900px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-table-card {
+    padding: 18px;
   }
 }
