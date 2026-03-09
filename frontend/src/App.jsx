@@ -1,36 +1,72 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
-import CryptoPage from "./pages/Crypto";
-import FeaturesPage from "./pages/Features";
-import LandingPage from "./pages/Home";
+import BitcoinPage from "./pages/Bitcoin";
+import ComparePage from "./pages/Compare";
+import DashboardPage from "./pages/Dashboard";
+import GoldSilverPage from "./pages/GoldSilver";
+import GrowthPage from "./pages/Growth";
+import HomePage from "./pages/Home";
 import LoginPage from "./pages/Login";
-import MetalsPage from "./pages/Metals";
+import MLAnalysisPage from "./pages/MLAnalysis";
 import PortfolioPage from "./pages/Portfolio";
-import StockDetailsPage from "./pages/StockDetails";
 import SignupPage from "./pages/Signup";
+import StockDetailsPage from "./pages/StockDetails";
 
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <LandingPage />
+            <DashboardPage />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/metals"
+        path="/growth"
         element={
           <ProtectedRoute>
-            <MetalsPage />
+            <GrowthPage />
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/ml-analysis"
+        element={
+          <ProtectedRoute>
+            <MLAnalysisPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gold-silver"
+        element={
+          <ProtectedRoute>
+            <GoldSilverPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/bitcoin"
+        element={
+          <ProtectedRoute>
+            <BitcoinPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/compare"
+        element={
+          <ProtectedRoute>
+            <ComparePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/stock/:stockId" element={<StockDetailsPage />} />
       <Route
         path="/portfolio/:portfolioId"
         element={
@@ -47,30 +83,9 @@ function App() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/stock/:stockId"
-        element={
-          <ProtectedRoute>
-            <StockDetailsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/crypto"
-        element={
-          <ProtectedRoute>
-            <CryptoPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/features"
-        element={
-          <ProtectedRoute>
-            <FeaturesPage />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/features" element={<Navigate to="/ml-analysis" replace />} />
+      <Route path="/metals" element={<Navigate to="/gold-silver" replace />} />
+      <Route path="/crypto" element={<Navigate to="/bitcoin" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

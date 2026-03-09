@@ -21,8 +21,14 @@ function Login() {
       setError("");
       await loginUser({ username, password });
       navigate("/dashboard");
-    } catch {
-      setError("Invalid credentials.");
+    } catch (requestError) {
+      if (requestError?.code === "ERR_NETWORK" || !requestError?.response) {
+        setError("Backend unavailable. Start the Django server and try again.");
+      } else if (requestError.response?.status === 400 || requestError.response?.status === 401) {
+        setError("Invalid credentials.");
+      } else {
+        setError("Login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -30,28 +36,37 @@ function Login() {
 
   return (
     <main className="auth-shell">
-      <section className="auth-card">
-        <p className="kicker">Welcome Back</p>
-        <h1>Login</h1>
+      <section className="tv-card auth-card">
+        <p className="eyebrow">Secure Login</p>
+        <h1>Welcome Back</h1>
+        <p className="section-copy">
+          Sign in to manage portfolios, growth projections, and ML analytics.
+        </p>
         <form className="auth-form" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <button type="submit" disabled={loading}>
+          <label>
+            <span>Email / Username</span>
+            <input
+              type="text"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              placeholder="Enter email or username"
+              required
+            />
+          </label>
+          <label>
+            <span>Password</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Enter password"
+              required
+            />
+          </label>
+          <button type="submit" className="primary-button" disabled={loading}>
             {loading ? "Logging in..." : "Login"}
           </button>
-          {error && <p className="error-text">{error}</p>}
+          {error ? <p className="error-text">{error}</p> : null}
         </form>
         <p className="hint-text">
           New user? <Link to="/signup">Create account</Link>

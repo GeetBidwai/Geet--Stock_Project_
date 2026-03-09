@@ -7,6 +7,20 @@ import { getStockDetails } from "../services/stockService";
 
 const RANGES = ["1d", "7d", "1mo", "3mo", "6mo", "1y", "3y"];
 
+const mockTickers = {
+  AAPL: { name: "Apple", symbol: "AAPL", sector: "Technology", exchange: "NASDAQ" },
+  MSFT: { name: "Microsoft", symbol: "MSFT", sector: "Technology", exchange: "NASDAQ" },
+  TSLA: { name: "Tesla", symbol: "TSLA", sector: "Automotive", exchange: "NASDAQ" },
+  NVDA: { name: "NVIDIA", symbol: "NVDA", sector: "Semiconductors", exchange: "NASDAQ" },
+};
+
+function buildMockSeries(symbol) {
+  return Array.from({ length: 10 }, (_, index) => ({
+    time: `T${index + 1}`,
+    price: Number((120 + index * 4 + (symbol.charCodeAt(0) % 9)).toFixed(2)),
+  }));
+}
+
 function StockDetails() {
   const { portfolioId: routePortfolioId, stockId } = useParams();
   const location = useLocation();
@@ -18,6 +32,32 @@ function StockDetails() {
 
   useEffect(() => {
     const loadStock = async () => {
+      const isNumericStockId = /^\d+$/.test(String(stockId));
+
+      if (!isNumericStockId) {
+        const fallback = mockTickers[String(stockId).toUpperCase()] || {
+          name: String(stockId).toUpperCase(),
+          symbol: String(stockId).toUpperCase(),
+          sector: "Market",
+          exchange: "Global",
+        };
+        setStock({
+          ...fallback,
+          chart: buildMockSeries(fallback.symbol),
+          cards: {
+            current_price: buildMockSeries(fallback.symbol).at(-1)?.price || 0,
+            change_percent: 1.2,
+            pe_ratio: 24.8,
+            eps: 5.1,
+            intrinsic_value: 214.4,
+            discount_percentage: 4.6,
+            opportunity_score: 82.4,
+          },
+        });
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError("");
@@ -31,7 +71,7 @@ function StockDetails() {
     };
 
     loadStock();
-  }, [portfolioId, stockId, range]);
+  }, [portfolioId, range, stockId]);
 
   if (loading) {
     return (
@@ -58,19 +98,22 @@ function StockDetails() {
     <main className="app-shell">
       <Navbar />
 
-      <section className="hero compact">
-        <p className="kicker">Stock Details</p>
-        <h1>{stock.name}</h1>
-        <p className="subtitle">
-          {stock.symbol} {stock.exchange ? `| ${stock.exchange}` : ""}
-          {stock.sector ? ` | ${stock.sector}` : ""}
-        </p>
-        <Link className="back-link" to={portfolioId ? `/portfolio/${portfolioId}` : "/dashboard"}>
+      <section className="page-header">
+        <div>
+          <p className="eyebrow">Stock Details</p>
+          <h1>{stock.name}</h1>
+          <p className="section-copy">
+            {stock.symbol}
+            {stock.exchange ? ` | ${stock.exchange}` : ""}
+            {stock.sector ? ` | ${stock.sector}` : ""}
+          </p>
+        </div>
+        <Link className="navbar-login" to={portfolioId ? `/portfolio/${portfolioId}` : "/"}>
           Back
         </Link>
       </section>
 
-      <section className="panel">
+      <section className="tv-card">
         <div className="range-switch">
           {RANGES.map((key) => (
             <button
@@ -86,7 +129,7 @@ function StockDetails() {
         <StockPriceChart points={stock.chart || []} />
       </section>
 
-      <section className="panel">
+      <section className="tv-card">
         <h2>Key Metrics</h2>
         <StockMetricCards cards={stock.cards || {}} />
       </section>

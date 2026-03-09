@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:backend": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Set-Location ../config; .\\venv\\Scripts\\python.exe manage.py runserver 127.0.0.1:8000\"",
+    "dev:stack": "powershell -NoProfile -ExecutionPolicy Bypass -File ../start-dev.ps1",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
