@@ -25,6 +25,8 @@ import { getStockSuggestions, addStockToPortfolio, removeStockFromPortfolio } fr
 const countryOptions = ["USA", "India", "UK"];
 const sectorOptions = [
   "Technology",
+  "Information Technology",
+  "Banking",
   "Healthcare",
   "Finance",
   "Consumer",
@@ -47,6 +49,8 @@ function Dashboard() {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [selectedStock, setSelectedStock] = useState(null);
+  const [sectorList, setSectorList] = useState(() => sectorOptions);
+  const [sectorInput, setSectorInput] = useState("");
   const [form, setForm] = useState({
     country: "USA",
     sector: "Technology",
@@ -166,6 +170,22 @@ function Dashboard() {
     }
   };
 
+  const handleAddSector = () => {
+    const nextSector = sectorInput.trim();
+    if (!nextSector) {
+      return;
+    }
+
+    const exists = sectorList.some(
+      (sector) => sector.toLowerCase() === nextSector.toLowerCase()
+    );
+    if (!exists) {
+      setSectorList((current) => [...current, nextSector]);
+    }
+    setForm((current) => ({ ...current, sector: nextSector }));
+    setSectorInput("");
+  };
+
   const handleRemove = async (row) => {
     try {
       setError("");
@@ -235,12 +255,31 @@ function Dashboard() {
                   setForm((current) => ({ ...current, sector: event.target.value }))
                 }
               >
-                {sectorOptions.map((option) => (
+                {sectorList.map((option) => (
                   <option key={option} value={option}>
                     {option}
                   </option>
                 ))}
               </select>
+            </label>
+
+            <label>
+              <span>Add Sector</span>
+              <div className="sector-add-row">
+                <input
+                  type="text"
+                  value={sectorInput}
+                  placeholder="e.g., Real Estate"
+                  onChange={(event) => setSectorInput(event.target.value)}
+                />
+                <button
+                  type="button"
+                  className="range-btn"
+                  onClick={handleAddSector}
+                >
+                  Add
+                </button>
+              </div>
             </label>
 
             <label className="stock-search-field">

@@ -5,7 +5,6 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 import yfinance as yf
-from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
 
@@ -518,24 +517,43 @@ def get_risk_cluster_data(portfolio):
     feature_frame = feature_frame.replace([np.inf, -np.inf], np.nan)
     feature_frame = feature_frame.fillna(feature_frame.median(numeric_only=True)).fillna(0)
 
-    cluster_count = min(3, len(frame))
-    if cluster_count == 1:
-        frame["cluster"] = 0
-    else:
-        model = KMeans(n_clusters=cluster_count, random_state=42, n_init=10)
-        frame["cluster"] = model.fit_predict(feature_frame)
+    def _normalize(series):
+        values = series.to_numpy(dtype=float)
+        min_value = np.nanmin(values) if len(values) else 0.0
+        max_value = np.nanmax(values) if len(values) else 1.0
+        if max_value == min_value:
+            return pd.Series([0.5] * len(series), index=series.index)
+        return (series - min_value) / (max_value - min_value)
 
-    ordered_clusters = (
-        frame.groupby("cluster")["volatility"]
-        .mean()
-        .sort_values()
-        .index.tolist()
+    vol_norm = _normalize(feature_frame["volatility"])
+    drawdown_norm = _normalize(feature_frame["max_drawdown"])
+    sharpe_norm = 1 - _normalize(feature_frame["sharpe_ratio"])
+    cagr_norm = 1 - _normalize(feature_frame["cagr"])
+
+    frame["risk_score"] = (
+        0.45 * vol_norm
+        + 0.35 * drawdown_norm
+        + 0.15 * sharpe_norm
+        + 0.05 * cagr_norm
     )
-    cluster_labels = {
-        cluster_id: RISK_LABELS[min(index, len(RISK_LABELS) - 1)]
-        for index, cluster_id in enumerate(ordered_clusters)
-    }
-    frame["risk_label"] = frame["cluster"].map(cluster_labels)
+
+    if len(frame) >= 3:
+        q_low = frame["risk_score"].quantile(0.33)
+        q_high = frame["risk_score"].quantile(0.66)
+        frame["risk_label"] = pd.cut(
+            frame["risk_score"],
+            bins=[-np.inf, q_low, q_high, np.inf],
+            labels=RISK_LABELS,
+        )
+    elif len(frame) == 2:
+        sorted_idx = frame["risk_score"].sort_values().index.tolist()
+        labels = {sorted_idx[0]: "Low Risk", sorted_idx[1]: "High Risk"}
+        frame["risk_label"] = frame.index.map(labels)
+    else:
+        frame["risk_label"] = "Medium Risk"
+
+    label_to_cluster = {label: index for index, label in enumerate(RISK_LABELS)}
+    frame["cluster"] = frame["risk_label"].map(label_to_cluster).fillna(1).astype(int)
 
     if len(frame) >= 2:
         pca = PCA(n_components=2)

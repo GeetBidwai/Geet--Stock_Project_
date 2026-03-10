@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import ChartCard from "../components/ChartCard";
 import Navbar from "../components/Navbar";
 import PortfolioGrowth from "../components/PortfolioGrowth";
@@ -50,6 +43,17 @@ function Growth() {
 
     return Object.entries(grouped).map(([name, value]) => ({ name, value }));
   }, [rows]);
+  const sectorLegend = useMemo(() => {
+    const totalValue = sectorData.reduce((sum, entry) => sum + entry.value, 0);
+    return sectorData.map((entry, index) => {
+      const color = chartColors[index % chartColors.length];
+      return {
+        ...entry,
+        color,
+        percent: totalValue ? (entry.value / totalValue) * 100 : 0,
+      };
+    });
+  }, [sectorData]);
 
   const bestStock = rows.reduce(
     (best, row) => (row.profitLoss > (best?.profitLoss ?? Number.NEGATIVE_INFINITY) ? row : best),
@@ -122,25 +126,35 @@ function Growth() {
             title="Sector Allocation"
             subtitle="Position value distribution by sector."
           >
-            <ResponsiveContainer width="100%" height={320}>
-              <PieChart>
-                <Pie
-                  data={sectorData}
-                  dataKey="value"
-                  nameKey="name"
-                  outerRadius={102}
-                  paddingAngle={2}
-                  labelLine={false}
-                  label={renderSectorLabel}
-                >
-                  {sectorData.map((entry, index) => (
-                    <Cell key={`${entry.name}-${index}`} fill={chartColors[index % chartColors.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => formatCurrency(value, "USD")} />
-                <Legend wrapperStyle={{ paddingTop: "18px", fontSize: "12px" }} />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="sector-chart-wrapper">
+              <ResponsiveContainer width="100%" height={320}>
+                <PieChart>
+                  <Pie
+                    data={sectorData}
+                    dataKey="value"
+                    nameKey="name"
+                    outerRadius={102}
+                    paddingAngle={2}
+                    labelLine={false}
+                    label={renderSectorLabel}
+                  >
+                    {sectorLegend.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => formatCurrency(value, "USD")} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="sector-legend" aria-label="sector allocations">
+                {sectorLegend.map((entry) => (
+                  <div key={entry.name} className="sector-legend-item">
+                    <span className="sector-legend-dot" style={{ background: entry.color }} />
+                    <span className="sector-legend-name">{entry.name}</span>
+                    <span className="sector-legend-value">{entry.percent.toFixed(0)}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </ChartCard>
         </>
       ) : null}
