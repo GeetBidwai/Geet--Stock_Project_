@@ -33,7 +33,6 @@ function PortfolioTable({ rows, totalValue, onRemove }) {
               <th>P/E Ratio</th>
               <th>Discount %</th>
               <th>Price Change</th>
-              <th>Position Value</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -58,7 +57,6 @@ function PortfolioTable({ rows, totalValue, onRemove }) {
                 >
                   {formatCurrencyOrDash(row.profitLoss, row.currency)}
                 </td>
-                <td>{formatCurrency(row.positionValue, row.currency)}</td>
                 <td>
                   <button
                     type="button"
