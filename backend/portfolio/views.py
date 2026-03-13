@@ -238,6 +238,11 @@ class StockDetailAPIView(APIView):
 class StockDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request, stock_id):
+        stock = _get_user_stock(request.user, stock_id)
+        update_stock_snapshot(stock)
+        return Response(build_stock_history_payload(stock, request.GET.get("range", "1mo")))
+
     def delete(self, request, stock_id):
         stock = _get_user_stock(request.user, stock_id)
         stock.delete()

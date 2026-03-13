@@ -7,6 +7,10 @@ import pandas as pd
 import yfinance as yf
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
+try:
+    from sklearn.cluster import KMeans
+except ImportError:  # pragma: no cover - optional dependency fallback
+    KMeans = None
 
 from .models import Portfolio, Stock
 
@@ -537,7 +541,29 @@ def get_risk_cluster_data(portfolio):
         + 0.05 * cagr_norm
     )
 
-    if len(frame) >= 3:
+    if len(frame) >= 3 and KMeans is not None:
+        n_clusters = min(3, len(frame))
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+        frame["cluster_raw"] = kmeans.fit_predict(feature_frame)
+
+        ranked_clusters = (
+            frame.groupby("cluster_raw")["risk_score"].mean().sort_values().index.tolist()
+        )
+        if n_clusters == 3:
+            label_map = {
+                ranked_clusters[0]: "Low Risk",
+                ranked_clusters[1]: "Medium Risk",
+                ranked_clusters[2]: "High Risk",
+            }
+        elif n_clusters == 2:
+            label_map = {
+                ranked_clusters[0]: "Low Risk",
+                ranked_clusters[1]: "High Risk",
+            }
+        else:
+            label_map = {ranked_clusters[0]: "Medium Risk"}
+        frame["risk_label"] = frame["cluster_raw"].map(label_map)
+    elif len(frame) >= 3:
         q_low = frame["risk_score"].quantile(0.33)
         q_high = frame["risk_score"].quantile(0.66)
         frame["risk_label"] = pd.cut(

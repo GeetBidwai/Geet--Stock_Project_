@@ -44,12 +44,12 @@ function Login() {
         </p>
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
-            <span>Email / Username</span>
+            <span>Username</span>
             <input
               type="text"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              placeholder="Enter email or username"
+              placeholder="Enter username"
               required
             />
           </label>

@@ -34,7 +34,7 @@ function MLAnalysis() {
         const items = await getPortfolios();
         setPortfolios(items);
         if (items.length) {
-          setPortfolioId(String(items[0].id));
+          setPortfolioId("all");
         }
       } finally {
         setLoading(false);
@@ -52,21 +52,35 @@ function MLAnalysis() {
       }
 
       try {
-        const clusterData = await getPortfolioRiskClusters(portfolioId);
-        const rows = (clusterData.clusters || []).map((item, index) => {
-          const actualTotal = Number((((item.cagr || 0) + 1) * 100).toFixed(2));
-          const predictedFutureTotal = Number((actualTotal * (1 + (item.sharpe_ratio || 0) / 10)).toFixed(2));
-          return {
-            symbol: item.ticker,
-            cluster: item.risk_label || item.cluster || index % 3,
-            actualTotal,
-            actualFutureTotal: actualTotal,
-            predictedFutureTotal,
-            volatility: Number(item.volatility || 0),
-            sharpeRatio: Number(item.sharpe_ratio || 0),
-            cagr: Number(item.cagr || 0),
-          };
-        });
+        const toRows = (clusters = []) =>
+          clusters.map((item, index) => {
+            const actualTotal = Number((((item.cagr || 0) + 1) * 100).toFixed(2));
+            const predictedFutureTotal = Number(
+              (actualTotal * (1 + (item.sharpe_ratio || 0) / 10)).toFixed(2)
+            );
+            return {
+              symbol: item.ticker,
+              cluster: item.risk_label || item.cluster || index % 3,
+              actualTotal,
+              actualFutureTotal: actualTotal,
+              predictedFutureTotal,
+              volatility: Number(item.volatility || 0),
+              sharpeRatio: Number(item.sharpe_ratio || 0),
+              cagr: Number(item.cagr || 0),
+            };
+          });
+
+        let rows = [];
+        if (portfolioId === "all") {
+          const responses = await Promise.all(
+            portfolios.map((portfolio) => getPortfolioRiskClusters(portfolio.id))
+          );
+          rows = responses.flatMap((payload) => toRows(payload.clusters || []));
+        } else {
+          const clusterData = await getPortfolioRiskClusters(portfolioId);
+          rows = toRows(clusterData.clusters || []);
+        }
+
         setAnalysisRows(rows);
         setSelectedRow(rows[0] || null);
       } catch {
@@ -76,7 +90,7 @@ function MLAnalysis() {
     };
 
     loadAnalysis();
-  }, [portfolioId]);
+  }, [portfolioId, portfolios]);
 
   const selectedSeries = useMemo(() => {
     if (!selectedRow) {
@@ -111,6 +125,7 @@ function MLAnalysis() {
         <label className="compact-select">
           <span>Portfolio</span>
           <select value={portfolioId} onChange={(event) => setPortfolioId(event.target.value)}>
+            <option value="all">All Portfolios</option>
             {portfolios.map((portfolio) => (
               <option key={portfolio.id} value={portfolio.id}>
                 {portfolio.name}

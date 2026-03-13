@@ -66,7 +66,14 @@ function App() {
           </ProtectedRoute>
         }
       />
-      <Route path="/stock/:stockId" element={<StockDetailsPage />} />
+      <Route
+        path="/stock/:stockId"
+        element={
+          <ProtectedRoute>
+            <StockDetailsPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/portfolio/:portfolioId"
         element={
