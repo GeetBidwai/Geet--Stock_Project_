@@ -33,7 +33,6 @@ Public:
 - `/` - Home / landing page
 - `/login` - Login
 - `/signup` - Signup
-- `/stock/:stockId` - Public stock details page
 
 Protected:
 
@@ -43,6 +42,7 @@ Protected:
 - `/gold-silver` - Precious metals analytics
 - `/bitcoin` - Bitcoin forecast analytics
 - `/compare` - Compare tracked positions
+- `/stock/:stockId` - Stock details (global stock id route)
 - `/portfolio/:portfolioId` - Portfolio detail view
 - `/portfolio/:portfolioId/stock/:stockId` - Portfolio-scoped stock details
 
@@ -51,6 +51,47 @@ Legacy redirects kept for compatibility:
 - `/features` -> `/ml-analysis`
 - `/metals` -> `/gold-silver`
 - `/crypto` -> `/bitcoin`
+
+## Backend API (Current)
+
+Auth:
+
+- `POST /api/auth/signup/`
+- `POST /api/auth/login/`
+- `POST /api/auth/logout/`
+- `GET /api/auth/me/`
+
+Portfolios:
+
+- `GET /api/portfolios/` - List current user's portfolios
+- `POST /api/portfolios/` - Create portfolio
+- `GET /api/portfolios/{id}/` - Portfolio detail with stocks + summary
+- `DELETE /api/portfolios/{id}/` - Delete portfolio
+
+Stocks:
+
+- `GET /api/stocks/search/?q=...` - Search suggestions
+- `GET /api/stocks/` - List all stocks for current user
+- `POST /api/stocks/` - Add stock using payload with `portfolio`, `symbol`, `name`, `sector`
+- `GET /api/stocks/{id}/` - **Stock detail endpoint** (returns chart + cards; supports `range`)
+- `DELETE /api/stocks/{id}/` - Delete stock
+- `GET /api/stocks/{id}/history/` - Legacy/compat detail endpoint (also supports `range`)
+- `GET /api/portfolios/{portfolio_id}/stocks/` - List stocks in a portfolio
+- `POST /api/portfolios/{portfolio_id}/stocks/` - Add stock to portfolio
+- `GET /api/portfolios/{portfolio_id}/stocks/{stock_id}/` - Portfolio-scoped stock detail
+- `DELETE /api/portfolios/{portfolio_id}/stocks/{stock_id}/` - Remove stock from portfolio
+
+Portfolio analytics:
+
+- `GET /api/portfolios/{id}/top-discount/`
+- `GET /api/portfolios/{id}/top-growth/?range=1w|1mo|3mo|6mo|1y|3y`
+- `GET /api/portfolios/{id}/risk-clusters/`
+- `GET /api/dashboard/summary/`
+
+Other analytics:
+
+- `GET /api/metals/history/?range=1mo|3mo|6mo|1y|3y`
+- `GET /api/crypto/btc/forecast/?model=linear|arima|rnn&days=14|30|60|90`
 
 ## Key UI Work Completed
 
