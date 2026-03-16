@@ -8,26 +8,43 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      - name: Copy frontend build to VM
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          source: "frontend/dist/*"
+          target: "/home/azureuser/Geet--Stock_Project_/frontend/dist"
+          strip_components: 2
+
+      - name: Deploy Backend via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
-          command_timeout: 30m
+          command_timeout: 10m
           script: |
             cd /home/azureuser/Geet--Stock_Project_
             git pull origin main
-
-            # Backend
             source backend/venv/bin/activate
             pip install -r backend/requirements.txt
             python backend/manage.py migrate
             python backend/manage.py collectstatic --noinput
             sudo systemctl restart stock
-
-            # Frontend
-            cd frontend
-            npm install
-            npm run build
             sudo systemctl restart nginx
