@@ -20,7 +20,6 @@ def _auth_payload(user):
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            "employee_id": user.employee_id,
         },
     }
 
@@ -30,7 +29,6 @@ def _auth_payload(user):
 def signup(request):
     username = request.data.get("username")
     email = request.data.get("email", "")
-    employee_id = request.data.get("employee_id")
     password = request.data.get("password")
 
     if not username or not employee_id or not password:
@@ -54,7 +52,6 @@ def signup(request):
     user = User.objects.create_user(
         username=username,
         email=email,
-        employee_id=employee_id,
         password=password,
     )
     auth_login(request, user)
@@ -100,6 +97,5 @@ def me(request):
             "id": request.user.id,
             "username": request.user.username,
             "email": request.user.email,
-            "employee_id": request.user.employee_id,
         }
     )

@@ -8,7 +8,6 @@ function Signup() {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
-    employee_id: "",
     password: "",
   });
   const [error, setError] = useState("");
@@ -26,7 +25,7 @@ function Signup() {
       await signupUser(formData);
       navigate("/dashboard");
     } catch {
-      setError("Signup failed. Username or employee ID may already exist.");
+      setError("Signup failed. Username may already exist.");
     } finally {
       setLoading(false);
     }
@@ -52,15 +51,6 @@ function Signup() {
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           />
           <input
-            type="text"
-            placeholder="Employee ID"
-            value={formData.employee_id}
-            onChange={(e) =>
-              setFormData({ ...formData, employee_id: e.target.value })
-            }
-            required
-          />
-          <input
             type="password"
             placeholder="Password"
             value={formData.password}
@@ -80,4 +70,4 @@ function Signup() {
   );
 }
 
-export default Signup;
+export default Signup;    
