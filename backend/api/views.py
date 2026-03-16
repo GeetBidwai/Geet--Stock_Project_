@@ -31,21 +31,15 @@ def signup(request):
     email = request.data.get("email", "")
     password = request.data.get("password")
 
-    if not username or not employee_id or not password:
+    if not username or not password:
         return Response(
-            {"detail": "username, employee_id and password are required."},
+            {"detail": "username and password are required."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     if User.objects.filter(username=username).exists():
         return Response(
             {"detail": "Username already exists."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    if User.objects.filter(employee_id=employee_id).exists():
-        return Response(
-            {"detail": "Employee ID already exists."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
