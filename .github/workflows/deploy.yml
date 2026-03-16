@@ -46,5 +46,5 @@ jobs:
             pip install -r backend/requirements.txt
             python backend/manage.py migrate
             python backend/manage.py collectstatic --noinput
-            sudo systemctl restart stock
+            pm2 restart tradevista
             sudo systemctl restart nginx
