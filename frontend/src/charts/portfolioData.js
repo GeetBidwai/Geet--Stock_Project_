@@ -1,27 +1,9 @@
 import { getPortfolioById, getPortfolios } from "../services/portfolioService";
 
-const POSITION_STORAGE_KEY = "tradevista_position_meta";
-
-export const countryCurrencyMap = {
-  USA: "USD",
-  India: "INR",
-  UK: "GBP",
-};
-
 const currencyFormatters = {
-  USD: new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }),
   INR: new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
-    maximumFractionDigits: 2,
-  }),
-  GBP: new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
     maximumFractionDigits: 2,
   }),
 };
@@ -99,110 +81,13 @@ function deriveDiscountPercent(stock, currentPrice, benchmarkPe) {
   return fallback;
 }
 
-function derivePreviousClose(stock, currentPrice) {
-  const directPreviousClose = Number(
-    stock.previous_close ??
-      stock.prev_close ??
-      stock.previousClose ??
-      stock.regularMarketPreviousClose ??
-      0
-  );
-
-  if (Number.isFinite(directPreviousClose) && directPreviousClose > 0) {
-    return directPreviousClose;
-  }
-
-  const changePercent = Number(stock.change_percent ?? stock.changePercent ?? 0);
-  if (Number.isFinite(changePercent) && Math.abs(changePercent) > EPSILON && currentPrice > 0) {
-    return currentPrice / (1 + changePercent / 100);
-  }
-
-  return null;
-}
-
-function deriveReferencePrice({
-  positionMeta,
-  currentPrice,
-  symbol,
-  discountPercent,
-  opportunityScore,
-  previousClose,
-}) {
-  const storedBuyPrice = Number(positionMeta.buyPrice);
-  const hasManualBuyPrice = positionMeta.isBuyPriceManual === true;
-
-  if (Number.isFinite(storedBuyPrice) && storedBuyPrice > 0) {
-    const storedMatchesCurrent = Math.abs(storedBuyPrice - currentPrice) <= EPSILON;
-    if (hasManualBuyPrice || !storedMatchesCurrent) {
-      return storedBuyPrice;
-    }
-  }
-
-  if (previousClose && previousClose > 0) {
-    return Number(previousClose.toFixed(2));
-  }
-
-  if (!(currentPrice > 0)) {
-    return null;
-  }
-
-  const momentumSeed = symbolHash(symbol);
-  const trendBias = ((momentumSeed % 19) - 9) * 0.65;
-  const valuationBias = clamp((discountPercent || 0) * 0.18, -8, 8);
-  const opportunityBias = clamp(((Number(opportunityScore || 0) - 50) / 10), -4, 4);
-  const movePercent = clamp(trendBias + valuationBias + opportunityBias, -18, 18);
-  const estimatedBuyPrice = currentPrice / (1 + movePercent / 100);
-
-  return Number(estimatedBuyPrice.toFixed(2));
-}
-
-function readPositionMeta() {
-  try {
-    return JSON.parse(localStorage.getItem(POSITION_STORAGE_KEY) || "{}");
-  } catch {
-    return {};
-  }
-}
-
-function writePositionMeta(value) {
-  localStorage.setItem(POSITION_STORAGE_KEY, JSON.stringify(value));
-}
-
-export function formatCurrency(value, currency = "USD") {
+export function formatCurrency(value, currency = "INR") {
   const numericValue = Number(value || 0);
-  return (currencyFormatters[currency] || currencyFormatters.USD).format(numericValue);
-}
-
-export function savePositionMeta({
-  portfolioId,
-  stockId,
-  quantity,
-  buyPrice,
-  country,
-  currency,
-  isBuyPriceManual = false,
-}) {
-  const existing = readPositionMeta();
-  existing[`${portfolioId}:${stockId}`] = {
-    quantity,
-    buyPrice,
-    country,
-    currency,
-    isBuyPriceManual,
-    createdAt: existing[`${portfolioId}:${stockId}`]?.createdAt || new Date().toISOString(),
-  };
-  writePositionMeta(existing);
-}
-
-export function removePositionMeta(portfolioId, stockId) {
-  const existing = readPositionMeta();
-  delete existing[`${portfolioId}:${stockId}`];
-  writePositionMeta(existing);
+  return (currencyFormatters[currency] || currencyFormatters.INR).format(numericValue);
 }
 
 export async function loadPortfolioDataset() {
   const portfolios = await getPortfolios();
-  const meta = readPositionMeta();
 
   const detailedPortfolios = await Promise.all(
     portfolios.map(async (portfolio) => {
@@ -213,32 +98,17 @@ export async function loadPortfolioDataset() {
       }
     })
   );
+
   const peBenchmarks = buildPeBenchmarks(detailedPortfolios);
 
   const rows = detailedPortfolios.flatMap((portfolio) =>
     (portfolio.stocks || []).map((stock) => {
-      const key = `${portfolio.id}:${stock.id}`;
-      const positionMeta = meta[key] || {};
-      const quantity = Number(positionMeta.quantity || 1);
       const currentPrice = Number(stock.current_price || 0);
       const benchmarkPe =
         peBenchmarks.sector[portfolio.sector || "Market"] || peBenchmarks.global || 0;
       const discountPercent = deriveDiscountPercent(stock, currentPrice, benchmarkPe);
-      const previousClose = derivePreviousClose(stock, currentPrice);
-      const buyPrice = deriveReferencePrice({
-        positionMeta,
-        currentPrice,
-        symbol: stock.ticker || stock.stock_id || stock.name,
-        discountPercent,
-        opportunityScore: Number(stock.opportunity_score || 0),
-        previousClose,
-      });
-      const currency = positionMeta.currency || "USD";
-      const profitLoss =
-        buyPrice !== null && buyPrice !== undefined
-          ? (currentPrice - buyPrice) * quantity
-          : null;
-      const positionValue = currentPrice * quantity;
+      const minPrice = Number(stock.min_price || 0);
+      const maxPrice = Number(stock.max_price || 0);
 
       return {
         portfolioId: portfolio.id,
@@ -247,29 +117,22 @@ export async function loadPortfolioDataset() {
         stockId: stock.id,
         symbol: stock.ticker || stock.stock_id,
         company: stock.name,
-        quantity,
-        buyPrice,
         currentPrice,
         peRatio: Number(stock.pe_ratio || 0),
         discountPercent: Number(discountPercent.toFixed(2)),
         opportunityScore: Number(stock.opportunity_score || 0),
-        profitLoss,
-        marketChangePercent: Number(
-          stock.change_percent ?? stock.changePercent ?? (
-            previousClose && previousClose > 0
-              ? (((currentPrice - previousClose) / previousClose) * 100).toFixed(2)
-              : Number.NaN
-          )
-        ),
-        positionValue,
-        currency,
-        country: positionMeta.country || "USA",
+        intrinsicValue: Number(stock.intrinsic_value || 0),
+        minPrice,
+        maxPrice,
+        rangeSpread: maxPrice > 0 && minPrice >= 0 ? Number((maxPrice - minPrice).toFixed(2)) : 0,
+        analysisValue: currentPrice,
+        currency: "INR",
         marketCap: stock.market_cap,
       };
     })
   );
 
-  const totalValue = rows.reduce((sum, row) => sum + row.positionValue, 0);
+  const totalValue = rows.reduce((sum, row) => sum + row.analysisValue, 0);
 
   return {
     portfolios: detailedPortfolios,
@@ -279,7 +142,7 @@ export async function loadPortfolioDataset() {
 }
 
 export function buildPredictionSeries(rows) {
-  const currentValue = rows.reduce((sum, row) => sum + row.positionValue, 0);
+  const currentValue = rows.reduce((sum, row) => sum + row.analysisValue, 0);
   const performanceFactor =
     rows.length > 0
       ? rows.reduce((sum, row) => sum + row.opportunityScore, 0) / rows.length

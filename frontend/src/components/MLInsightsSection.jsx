@@ -13,15 +13,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import ChartCard from "../components/ChartCard";
-import Navbar from "../components/Navbar";
 import { formatCurrency } from "../charts/portfolioData";
 import {
   getPortfolioRiskClusters,
   getPortfolios,
 } from "../services/portfolioService";
+import ChartCard from "./ChartCard";
 
-function MLAnalysis() {
+function MLInsightsSection() {
   const [portfolios, setPortfolios] = useState([]);
   const [portfolioId, setPortfolioId] = useState("");
   const [analysisRows, setAnalysisRows] = useState([]);
@@ -33,9 +32,7 @@ function MLAnalysis() {
       try {
         const items = await getPortfolios();
         setPortfolios(items);
-        if (items.length) {
-          setPortfolioId("all");
-        }
+        setPortfolioId("all");
       } finally {
         setLoading(false);
       }
@@ -48,6 +45,7 @@ function MLAnalysis() {
     const loadAnalysis = async () => {
       if (!portfolioId) {
         setAnalysisRows([]);
+        setSelectedRow(null);
         return;
       }
 
@@ -111,15 +109,13 @@ function MLAnalysis() {
   }, [selectedRow]);
 
   return (
-    <main className="app-shell">
-      <Navbar />
-
-      <section className="page-header">
+    <section className="dashboard-section">
+      <section className="page-header dashboard-subhead">
         <div>
-          <p className="eyebrow">ML Analysis</p>
-          <h1>Machine-learning style insights across your portfolio risk profile</h1>
+          <p className="eyebrow">ML Insights</p>
+          <h2>Risk patterns and forecast-style signals across your portfolios</h2>
           <p className="section-copy">
-            Explore clustering, regression-style comparisons, and forecast-style projections from the available risk data.
+            Review clustering, projected movement, and cross-portfolio comparisons without leaving the dashboard.
           </p>
         </div>
         <label className="compact-select">
@@ -135,7 +131,7 @@ function MLAnalysis() {
         </label>
       </section>
 
-      {loading ? <div className="tv-card">Loading ML analysis...</div> : null}
+      {loading ? <div className="tv-card dashboard-section">Loading ML insights...</div> : null}
 
       {!loading ? (
         <>
@@ -238,45 +234,49 @@ function MLAnalysis() {
           <section className="tv-card dashboard-section ml-analysis-table-card">
             <div className="section-head">
               <div>
-                <h2>Analysis Table</h2>
+                <h2>ML Analysis Table</h2>
                 <p className="section-copy">
                   Select a row to inspect the future prediction graph.
                 </p>
               </div>
             </div>
-            <div className="portfolio-table-wrapper table-wrap">
-              <table className="portfolio-table">
-                <thead>
-                  <tr>
-                    <th>Symbol</th>
-                    <th>Cluster</th>
-                    <th>Actual Total</th>
-                    <th>Actual Future Total</th>
-                    <th>Predicted Future Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {analysisRows.map((row) => (
-                    <tr
-                      key={row.symbol}
-                      className={selectedRow?.symbol === row.symbol ? "is-selected" : ""}
-                      onClick={() => setSelectedRow(row)}
-                    >
-                      <td>{row.symbol}</td>
-                      <td>{row.cluster}</td>
-                      <td>{formatCurrency(row.actualTotal)}</td>
-                      <td>{formatCurrency(row.actualFutureTotal)}</td>
-                      <td>{formatCurrency(row.predictedFutureTotal)}</td>
+            {!analysisRows.length ? (
+              <p className="empty-state-card">No ML insight rows are available for the selected portfolio yet.</p>
+            ) : (
+              <div className="portfolio-table-wrapper table-wrap">
+                <table className="portfolio-table">
+                  <thead>
+                    <tr>
+                      <th>Symbol</th>
+                      <th>Cluster</th>
+                      <th>Actual Total</th>
+                      <th>Actual Future Total</th>
+                      <th>Predicted Future Total</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {analysisRows.map((row) => (
+                      <tr
+                        key={row.symbol}
+                        className={selectedRow?.symbol === row.symbol ? "is-selected" : ""}
+                        onClick={() => setSelectedRow(row)}
+                      >
+                        <td>{row.symbol}</td>
+                        <td>{row.cluster}</td>
+                        <td>{formatCurrency(row.actualTotal)}</td>
+                        <td>{formatCurrency(row.actualFutureTotal)}</td>
+                        <td>{formatCurrency(row.predictedFutureTotal)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         </>
       ) : null}
-    </main>
+    </section>
   );
 }
 
-export default MLAnalysis;
+export default MLInsightsSection;

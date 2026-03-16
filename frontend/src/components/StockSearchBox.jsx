@@ -42,7 +42,8 @@ function StockSearchBox({ onSelect }) {
         onChange={(e) => setQuery(e.target.value)}
       />
 
-      {loading && <p className="hint-text">Searching...</p>}
+      <p className="hint-text">India equities only: NSE (.NS) and BSE (.BO).</p>
+      {loading && <p className="hint-text">Searching Indian equities...</p>}
 
       {!!suggestions.length && (
         <ul className="suggestion-list">
@@ -54,14 +55,16 @@ function StockSearchBox({ onSelect }) {
                 onClick={() => handleChoice(item)}
               >
                 <span>{item.name}</span>
-                <small>
-                  {item.symbol} {item.exchange ? `- ${item.exchange}` : ""}
-                </small>
+                <small>{`${item.symbol} - ${item.exchange}`}</small>
               </button>
             </li>
           ))}
         </ul>
       )}
+
+      {!loading && query.trim().length >= 2 && !suggestions.length ? (
+        <p className="hint-text">No Indian equity matches found.</p>
+      ) : null}
     </div>
   );
 }

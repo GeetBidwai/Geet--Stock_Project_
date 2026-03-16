@@ -1,200 +1,111 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import ChartCard from "../components/ChartCard";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import MLInsightsSection from "../components/MLInsightsSection";
 import PortfolioTable from "../components/PortfolioTable";
-import ProfitLossChart from "../components/ProfitLossChart";
 import StatCard from "../components/StatCard";
+import { loadPortfolioDataset } from "../charts/portfolioData";
 import {
-  countryCurrencyMap,
-  formatCurrency,
-  loadPortfolioDataset,
-  savePositionMeta,
-} from "../charts/portfolioData";
-import { createPortfolio } from "../services/portfolioService";
-import { getStockSuggestions, addStockToPortfolio, removeStockFromPortfolio } from "../services/stockService";
-
-const countryOptions = ["USA", "India", "UK"];
-const sectorOptions = [
-  "Technology",
-  "Information Technology",
-  "Banking",
-  "Healthcare",
-  "Finance",
-  "Consumer",
-  "Energy",
-  "Industrial",
-];
-
-const compactXAxisProps = {
-  dataKey: "name",
-  interval: 0,
-  height: 56,
-  tick: { fontSize: 11, fill: "#64748b" },
-};
+  createPortfolio,
+  deletePortfolio,
+  getPortfolioSectors,
+} from "../services/portfolioService";
 
 function Dashboard() {
+  const navigate = useNavigate();
   const [dataset, setDataset] = useState({ portfolios: [], rows: [], totalValue: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [saving, setSaving] = useState(false);
-  const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
-  const [selectedStock, setSelectedStock] = useState(null);
-  const [sectorList, setSectorList] = useState(() => sectorOptions);
-  const [sectorInput, setSectorInput] = useState("");
+  const [sectorList, setSectorList] = useState([]);
   const [form, setForm] = useState({
-    country: "USA",
-    sector: "Technology",
-    quantity: "1",
+    name: "",
+    sector: "",
   });
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
-      const nextDataset = await loadPortfolioDataset();
+      const [nextDataset, nextSectors] = await Promise.all([
+        loadPortfolioDataset(),
+        getPortfolioSectors(),
+      ]);
       setDataset(nextDataset);
+      setSectorList(nextSectors);
+      setForm((current) =>
+        nextSectors.includes(current.sector)
+          ? current
+          : { ...current, sector: nextSectors[0] || "" }
+      );
     } catch {
       setError("Unable to load dashboard data.");
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadData();
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(async () => {
-      if (query.trim().length < 2) {
-        setSuggestions([]);
-        return;
-      }
+    loadData();
+  }, [loadData]);
 
-      try {
-        const data = await getStockSuggestions(query.trim());
-        setSuggestions(data);
-      } catch {
-        setSuggestions([]);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  const rows = dataset.rows;
-  const totalValue = dataset.totalValue;
-  const profitLoss = rows.reduce((sum, row) => sum + (Number(row.profitLoss) || 0), 0);
-
-  const chartRows = useMemo(() => rows.slice(0, 8), [rows]);
-
-  const analyticsData = useMemo(
-    () => ({
-      profitLoss: chartRows.map((row) => ({
-        name: row.symbol,
-        value: Number((row.profitLoss || 0).toFixed(2)),
-      })),
-      discount: chartRows.map((row) => ({
-        name: row.symbol,
-        value: Number(row.discountPercent.toFixed(2)),
-      })),
-      opportunity: chartRows.map((row) => ({
-        name: row.symbol,
-        value: Number((row.positionValue * (row.opportunityScore / 100)).toFixed(2)),
-      })),
-      peRatio: chartRows.map((row) => ({
-        name: row.symbol,
-        value: Number(row.peRatio.toFixed(2)),
-      })),
-    }),
-    [chartRows]
-  );
-
-  const sectorValueData = useMemo(() => {
-    const sectorMap = rows.reduce((accumulator, row) => {
-      accumulator[row.sector] = (accumulator[row.sector] || 0) + row.positionValue;
-      return accumulator;
-    }, {});
-
-    return Object.entries(sectorMap).map(([name, value]) => ({ name, value }));
-  }, [rows]);
-
-  const handleCreatePosition = async (event) => {
+  const handleCreatePortfolio = async (event) => {
     event.preventDefault();
 
-    if (!selectedStock) {
-      setError("Select a stock before creating a portfolio position.");
+    const name = form.name.trim();
+    if (!name) {
+      setSuccessMessage("");
+      setError("Enter a portfolio name.");
       return;
     }
 
-    const quantity = Number(form.quantity);
-    if (!quantity || quantity <= 0) {
-      setError("Enter a valid quantity.");
+    if (!form.sector.trim()) {
+      setSuccessMessage("");
+      setError("Choose a sector.");
       return;
     }
 
     try {
       setSaving(true);
       setError("");
-      const portfolio = await createPortfolio({
-        name: `${form.country} ${form.sector} Portfolio`,
+      setSuccessMessage("");
+      await createPortfolio({
+        name,
         sector: form.sector,
       });
-      const createdStock = await addStockToPortfolio(portfolio.id, selectedStock);
-      savePositionMeta({
-        portfolioId: portfolio.id,
-        stockId: createdStock.id,
-        quantity,
-        buyPrice: Number(createdStock.current_price || 0),
-        country: form.country,
-        currency: countryCurrencyMap[form.country],
-      });
-      setQuery("");
-      setSuggestions([]);
-      setSelectedStock(null);
       await loadData();
+      setForm((current) => ({
+        name: "",
+        sector: current.sector || "",
+      }));
+      setSuccessMessage("Portfolio created successfully.");
     } catch {
-      setError("Unable to create portfolio position.");
+      setSuccessMessage("");
+      setError("Unable to create portfolio.");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleAddSector = () => {
-    const nextSector = sectorInput.trim();
-    if (!nextSector) {
-      return;
-    }
-
-    const exists = sectorList.some(
-      (sector) => sector.toLowerCase() === nextSector.toLowerCase()
-    );
-    if (!exists) {
-      setSectorList((current) => [...current, nextSector]);
-    }
-    setForm((current) => ({ ...current, sector: nextSector }));
-    setSectorInput("");
-  };
-
-  const handleRemove = async (row) => {
+  const handleDeletePortfolio = async (portfolioId) => {
     try {
       setError("");
-      await removeStockFromPortfolio(row.portfolioId, row.stockId);
+      setSuccessMessage("");
+      await deletePortfolio(portfolioId);
       await loadData();
     } catch {
-      setError("Unable to remove this position.");
+      setError("Unable to delete portfolio.");
     }
   };
+
+  const portfolios = dataset.portfolios || [];
+  const rows = dataset.rows || [];
+  const averageDiscount = rows.length
+    ? rows.reduce((sum, row) => sum + row.discountPercent, 0) / rows.length
+    : 0;
+  const sectorCount = new Set(portfolios.map((portfolio) => portfolio.sector).filter(Boolean)).size;
+  const undervaluedCount = rows.filter((row) => row.discountPercent > 0).length;
 
   return (
     <main className="app-shell">
@@ -202,20 +113,16 @@ function Dashboard() {
 
       <section className="page-header">
         <div>
-          <p className="eyebrow">My Dashboard</p>
-          <h1>Portfolio analytics built around your active positions</h1>
-          <p className="section-copy">
-            Build positions by country, sector, and stock while keeping the existing
-            backend portfolio APIs intact.
+          <p className="eyebrow" style={{ color: "var(--primary)", display: "inline-block", padding: "0.25rem 0.75rem", background: "#e0e7ff", borderRadius: "999px" }}>My Dashboard</p>
+          <h1 style={{ background: "linear-gradient(to right, #1e40af, #3b82f6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Build Portfolios With a Sharper Edge</h1>
+          <p className="section-copy" style={{ fontSize: "1.1rem", maxWidth: "600px" }}>
+            Launch focused portfolios in a few clicks, then dive into the stocks,
+            signals, and analytics behind each theme.
           </p>
         </div>
-        <div className="header-stats">
-          <StatCard label="Total Positions" value={rows.length} />
-          <StatCard
-            label="Portfolio Value"
-            value={formatCurrency(totalValue, "USD")}
-            tone="positive"
-          />
+        <div className="header-stats" style={{ background: "linear-gradient(135deg, #f8fafc, #f1f5f9)", padding: "1.5rem", borderRadius: "20px", border: "1px solid #e2e8f0" }}>
+          <StatCard label="Total Portfolios" value={portfolios.length} />
+          <StatCard label="Tracked Stocks" value={rows.length} tone="positive" />
         </div>
       </section>
 
@@ -223,137 +130,66 @@ function Dashboard() {
         <section className="tv-card builder-card">
           <div className="section-head">
             <div>
-              <h2>Portfolio Builder</h2>
+              <h2>Start a New Portfolio</h2>
               <p className="section-copy">
-                Select country, sector, stock, and quantity to create a new tracked position.
+                Name your portfolio, choose a sector, and we will set up the space for it.
               </p>
             </div>
           </div>
 
-          <form className="builder-form" onSubmit={handleCreatePosition}>
+          <form className="builder-form builder-form-centered" onSubmit={handleCreatePortfolio}>
             <label>
-              <span>1. Select Country</span>
-              <select
-                value={form.country}
+              <span>Portfolio Name</span>
+              <input
+                type="text"
+                value={form.name}
+                placeholder="e.g., Growth Leaders"
                 onChange={(event) =>
-                  setForm((current) => ({ ...current, country: event.target.value }))
+                  setForm((current) => ({ ...current, name: event.target.value }))
                 }
-              >
-                {countryOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+              />
             </label>
 
             <label>
-              <span>2. Select Sector</span>
+              <span>Sector</span>
               <select
                 value={form.sector}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, sector: event.target.value }))
                 }
+                disabled={!sectorList.length}
               >
-                {sectorList.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
+                {sectorList.length ? (
+                  sectorList.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))
+                ) : (
+                  <option value="">Loading sectors...</option>
+                )}
               </select>
             </label>
 
-            <label>
-              <span>Add Sector</span>
-              <div className="sector-add-row">
-                <input
-                  type="text"
-                  value={sectorInput}
-                  placeholder="e.g., Real Estate"
-                  onChange={(event) => setSectorInput(event.target.value)}
-                />
-                <button
-                  type="button"
-                  className="range-btn"
-                  onClick={handleAddSector}
-                >
-                  Add
-                </button>
-              </div>
-            </label>
-
-            <label className="stock-search-field">
-              <span>3. Select Stock</span>
-              <input
-                type="text"
-                value={query}
-                placeholder="Search by symbol or company"
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                  setSelectedStock(null);
-                }}
-              />
-              {!!suggestions.length && (
-                <div className="suggestion-panel">
-                  {suggestions.map((item) => (
-                    <button
-                      key={`${item.symbol}-${item.name}`}
-                      type="button"
-                      className="suggestion-row"
-                      onClick={() => {
-                        setSelectedStock(item);
-                        setQuery(`${item.symbol} - ${item.name}`);
-                        setSuggestions([]);
-                      }}
-                    >
-                      <strong>{item.symbol}</strong>
-                      <span>{item.name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </label>
-
-            <label>
-              <span>4. Enter Quantity</span>
-              <input
-                type="number"
-                min="1"
-                value={form.quantity}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, quantity: event.target.value }))
-                }
-              />
-            </label>
-
             <div className="builder-actions">
-              <span className="currency-chip">
-                Currency: {countryCurrencyMap[form.country]}
-              </span>
               <button type="submit" className="primary-button" disabled={saving}>
-                {saving ? "Creating..." : "Create Position"}
+                {saving ? "Creating..." : "Create Portfolio"}
               </button>
             </div>
           </form>
 
           {error ? <p className="error-text">{error}</p> : null}
+          {successMessage ? <p className="success-text">{successMessage}</p> : null}
         </section>
 
         <section className="tv-card summary-stack">
-          <StatCard label="Total Portfolio Value" value={formatCurrency(totalValue, "USD")} />
+          <StatCard label="Total Sectors" value={sectorCount} />
+          <StatCard label="Average Discount" value={`${averageDiscount.toFixed(2)}%`} />
+          <StatCard label="Undervalued Stocks" value={undervaluedCount} />
           <StatCard
-            label="Market Move"
-            value={formatCurrency(profitLoss, "USD")}
-            tone={profitLoss >= 0 ? "positive" : "negative"}
-          />
-          <StatCard
-            label="Average Discount"
-            value={`${rows.length ? (rows.reduce((sum, row) => sum + row.discountPercent, 0) / rows.length).toFixed(2) : "0.00"}%`}
-          />
-          <StatCard
-            label="Sector Mix"
-            value={`${sectorValueData.length} sectors`}
-            hint="Based on tracked positions"
+            label="Portfolio Coverage"
+            value={`${rows.length} stocks`}
+            hint="Across all portfolios"
           />
         </section>
       </section>
@@ -361,55 +197,21 @@ function Dashboard() {
       <section className="tv-card dashboard-section dashboard-table-card">
         <div className="section-head">
           <div>
-            <h2>Portfolio Table</h2>
-            <p className="section-copy">Current holdings and derived analytics metrics.</p>
+            <h2>All Portfolios</h2>
+            <p className="section-copy">
+              Open a portfolio to manage its stocks and view sector-specific analytics.
+            </p>
           </div>
         </div>
-        {loading ? <p className="section-copy">Loading portfolio positions...</p> : null}
-        <PortfolioTable rows={rows} totalValue={totalValue} onRemove={handleRemove} />
+        {loading ? <p className="section-copy">Loading portfolios...</p> : null}
+        <PortfolioTable
+          portfolios={portfolios}
+          onOpen={(portfolioId) => navigate(`/portfolio/${portfolioId}`)}
+          onDelete={handleDeletePortfolio}
+        />
       </section>
 
-      <section className="analytics-grid dashboard-grid dashboard-section">
-        <ChartCard title="Price Change" subtitle="Position-level move versus previous close.">
-          <ProfitLossChart data={analyticsData.profitLoss} />
-        </ChartCard>
-
-        <ChartCard title="Discount Percentage" subtitle="Relative discount across positions.">
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={analyticsData.discount}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis {...compactXAxisProps} />
-              <YAxis domain={["auto", "auto"]} />
-              <Tooltip />
-              <Bar dataKey="value" fill="#0f766e" minPointSize={5} radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="Opportunity Value" subtitle="Position value weighted by opportunity score.">
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={analyticsData.opportunity}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis {...compactXAxisProps} />
-              <YAxis domain={["auto", "auto"]} />
-              <Tooltip />
-              <Bar dataKey="value" fill="#f59e0b" minPointSize={5} radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard title="P/E Ratio" subtitle="Current valuation multiple by position.">
-          <ResponsiveContainer width="100%" height={320}>
-            <BarChart data={analyticsData.peRatio}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis {...compactXAxisProps} />
-              <YAxis domain={["auto", "auto"]} />
-              <Tooltip />
-              <Bar dataKey="value" fill="#7c3aed" minPointSize={5} radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </section>
+      <MLInsightsSection />
     </main>
   );
 }

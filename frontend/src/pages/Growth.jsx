@@ -37,7 +37,7 @@ function Growth() {
   );
   const sectorData = useMemo(() => {
     const grouped = rows.reduce((accumulator, row) => {
-      accumulator[row.sector] = (accumulator[row.sector] || 0) + row.positionValue;
+      accumulator[row.sector] = (accumulator[row.sector] || 0) + row.analysisValue;
       return accumulator;
     }, {});
 
@@ -55,10 +55,12 @@ function Growth() {
     });
   }, [sectorData]);
 
-  const bestStock = rows.reduce(
-    (best, row) => (row.profitLoss > (best?.profitLoss ?? Number.NEGATIVE_INFINITY) ? row : best),
-    null
-  );
+  const bestStock = rows.reduce((best, row) => {
+    if (!best) {
+      return row;
+    }
+    return row.opportunityScore > best.opportunityScore ? row : best;
+  }, null);
   const futureValue = projectionSeries.at(-1)?.predicted || 0;
   const minimumValue = projectionSeries.length
     ? Math.min(...projectionSeries.map((item) => Math.min(item.actual || 0, item.predicted || 0)))
@@ -103,28 +105,27 @@ function Growth() {
               <PortfolioGrowth data={projectionSeries} />
             </div>
 
-            <section className="stats-grid growth-stats-grid">
-              <StatCard label="Total Portfolio Value" value={formatCurrency(dataset.totalValue, "USD")} />
+          <section className="stats-grid growth-stats-grid">
+              <StatCard label="Total Portfolio Value" value={formatCurrency(dataset.totalValue)} />
               <StatCard
-                label="Market Move"
-                value={formatCurrency(rows.reduce((sum, row) => sum + (Number(row.profitLoss) || 0), 0), "USD")}
-                tone="negative"
+                label="Average Discount"
+                value={`${rows.length ? (rows.reduce((sum, row) => sum + row.discountPercent, 0) / rows.length).toFixed(2) : "0.00"}%`}
               />
-              <StatCard label="Future Portfolio Value" value={formatCurrency(futureValue, "USD")} />
-              <StatCard label="Minimum Value" value={formatCurrency(minimumValue, "USD")} />
-              <StatCard label="Maximum Value" value={formatCurrency(maximumValue, "USD")} />
+              <StatCard label="Future Portfolio Value" value={formatCurrency(futureValue)} />
+              <StatCard label="Minimum Value" value={formatCurrency(minimumValue)} />
+              <StatCard label="Maximum Value" value={formatCurrency(maximumValue)} />
               <StatCard label="Average P/E Ratio" value={peAverage.toFixed(2)} />
               <StatCard
-                label="Best Performing Stock"
+                label="Top Opportunity"
                 value={bestStock ? bestStock.symbol : "-"}
-                hint={bestStock ? formatCurrency(bestStock.profitLoss, bestStock.currency) : "No data"}
+                hint={bestStock ? `${bestStock.opportunityScore.toFixed(1)} score` : "No data"}
               />
             </section>
           </section>
 
           <ChartCard
             title="Sector Allocation"
-            subtitle="Position value distribution by sector."
+            subtitle="Analysis value distribution by sector."
           >
             <div className="sector-chart-wrapper">
               <ResponsiveContainer width="100%" height={320}>
@@ -142,7 +143,7 @@ function Growth() {
                       <Cell key={entry.name} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => formatCurrency(value, "USD")} />
+                  <Tooltip formatter={(value) => formatCurrency(value)} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="sector-legend" aria-label="sector allocations">

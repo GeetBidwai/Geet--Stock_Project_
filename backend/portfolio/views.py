@@ -27,6 +27,17 @@ from .services import (
 )
 
 
+DEFAULT_PORTFOLIO_SECTORS = [
+    "Information Technology",
+    "Banking",
+    "Healthcare",
+    "Finance",
+    "Consumer",
+    "Energy",
+    "Industrial",
+]
+
+
 def _get_user_portfolio(user, portfolio_id):
     return get_object_or_404(Portfolio, pk=portfolio_id, owner=user)
 
@@ -39,6 +50,22 @@ def _serialize_portfolio_detail(portfolio):
     payload = PortfolioDetailSerializer(portfolio).data
     payload["summary"] = summarize_portfolio(portfolio)
     return payload
+
+
+def _get_sector_choices(user):
+    portfolio_sectors = Portfolio.objects.filter(owner=user).values_list("sector", flat=True)
+    stock_sectors = Stock.objects.filter(portfolio__owner=user).values_list("sector", flat=True)
+    choices = []
+
+    for sector in [*DEFAULT_PORTFOLIO_SECTORS, *portfolio_sectors, *stock_sectors]:
+        value = (sector or "").strip()
+        if not value:
+            continue
+        if any(existing.lower() == value.lower() for existing in choices):
+            continue
+        choices.append(value)
+
+    return choices
 
 
 class DashboardSummaryAPIView(APIView):
@@ -64,6 +91,13 @@ class PortfolioListAPIView(APIView):
             PortfolioSerializer(portfolio).data,
             status=status.HTTP_201_CREATED,
         )
+
+
+class PortfolioSectorListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(_get_sector_choices(request.user))
 
 
 class PortfolioDetailAPIView(APIView):

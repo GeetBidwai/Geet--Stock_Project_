@@ -10,6 +10,11 @@ export async function createPortfolio(payload) {
   return response.data;
 }
 
+export async function getPortfolioSectors() {
+  const response = await http.get("/portfolios/sectors/");
+  return response.data;
+}
+
 export async function getPortfolioById(portfolioId) {
   const response = await http.get(`/portfolios/${portfolioId}/`);
   return response.data;

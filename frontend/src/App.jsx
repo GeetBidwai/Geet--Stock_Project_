@@ -7,7 +7,6 @@ import GoldSilverPage from "./pages/GoldSilver";
 import GrowthPage from "./pages/Growth";
 import HomePage from "./pages/Home";
 import LoginPage from "./pages/Login";
-import MLAnalysisPage from "./pages/MLAnalysis";
 import PortfolioPage from "./pages/Portfolio";
 import SignupPage from "./pages/Signup";
 import StockDetailsPage from "./pages/StockDetails";
@@ -38,7 +37,7 @@ function App() {
         path="/ml-analysis"
         element={
           <ProtectedRoute>
-            <MLAnalysisPage />
+            <Navigate to="/dashboard" replace />
           </ProtectedRoute>
         }
       />
@@ -90,7 +89,7 @@ function App() {
           </ProtectedRoute>
         }
       />
-      <Route path="/features" element={<Navigate to="/ml-analysis" replace />} />
+      <Route path="/features" element={<Navigate to="/dashboard" replace />} />
       <Route path="/metals" element={<Navigate to="/gold-silver" replace />} />
       <Route path="/crypto" element={<Navigate to="/bitcoin" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />

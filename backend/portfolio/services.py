@@ -58,6 +58,8 @@ METALS_RANGE_MAP = {
 
 RISK_LABELS = ["Low Risk", "Medium Risk", "High Risk"]
 RF_RATE = 0.06
+INDIA_EQUITY_SUFFIXES = (".NS", ".BO")
+INDIA_EQUITY_EXCHANGES = {"NSE", "BSE"}
 
 
 def normalize_range(value, mapping, default_key):
@@ -120,6 +122,29 @@ def fetch_history(symbol, period="1mo", interval="1d"):
     return history if isinstance(history, pd.DataFrame) else _empty_history()
 
 
+def is_india_equity_symbol(symbol):
+    normalized = (symbol or "").strip().upper()
+    return normalized.endswith(INDIA_EQUITY_SUFFIXES)
+
+
+def normalize_india_exchange(quote):
+    exchange = (
+        quote.get("exchDisp")
+        or quote.get("exchange")
+        or quote.get("fullExchangeName")
+        or ""
+    ).strip().upper()
+    symbol = (quote.get("symbol") or "").strip().upper()
+
+    if exchange in INDIA_EQUITY_EXCHANGES:
+        return exchange
+    if symbol.endswith(".NS"):
+        return "NSE"
+    if symbol.endswith(".BO"):
+        return "BSE"
+    return ""
+
+
 def fetch_search_results(query, limit=10):
     if len(query.strip()) < 2:
         return []
@@ -136,14 +161,15 @@ def fetch_search_results(query, limit=10):
             continue
         symbol = quote.get("symbol")
         name = quote.get("shortname") or quote.get("longname")
-        if not symbol or not name:
+        exchange = normalize_india_exchange(quote)
+        if not symbol or not name or not is_india_equity_symbol(symbol) or not exchange:
             continue
         results.append(
             {
-                "symbol": symbol,
+                "symbol": symbol.upper(),
                 "name": name,
                 "sector": quote.get("sectorDisp") or quote.get("sector", ""),
-                "exchange": quote.get("exchDisp", ""),
+                "exchange": exchange,
             }
         )
     return results
@@ -197,8 +223,8 @@ def build_stock_metrics(symbol, fallback=None):
     )
 
     discount_percent = None
-    if intrinsic_value and current_price and intrinsic_value > 0:
-        discount_percent = ((intrinsic_value - current_price) / intrinsic_value) * 100
+    if intrinsic_value and current_price and intrinsic_value > current_price * 0.5:
+        discount_percent = ((intrinsic_value - current_price) / current_price) * 100
     elif max_price and current_price and max_price > 0:
         discount_percent = ((max_price - current_price) / max_price) * 100
 

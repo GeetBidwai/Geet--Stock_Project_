@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Portfolio, Stock
+from .services import is_india_equity_symbol
 
 
 class PortfolioSerializer(serializers.ModelSerializer):
@@ -54,3 +55,9 @@ class StockCreateSerializer(serializers.Serializer):
     symbol = serializers.CharField(max_length=25)
     name = serializers.CharField(max_length=100)
     sector = serializers.CharField(max_length=100, required=False, allow_blank=True)
+
+    def validate_symbol(self, value):
+        normalized = (value or "").strip().upper()
+        if not is_india_equity_symbol(normalized):
+            raise serializers.ValidationError("India equities only. Use an NSE (.NS) or BSE (.BO) symbol.")
+        return normalized

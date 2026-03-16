@@ -43,8 +43,18 @@ function Compare() {
     }
 
     return [
-      { metric: stockA.symbol, price: stockA.currentPrice, performance: stockA.profitLoss, peRatio: stockA.peRatio },
-      { metric: stockB.symbol, price: stockB.currentPrice, performance: stockB.profitLoss, peRatio: stockB.peRatio },
+      {
+        metric: stockA.symbol,
+        price: stockA.currentPrice,
+        discount: stockA.discountPercent,
+        peRatio: stockA.peRatio,
+      },
+      {
+        metric: stockB.symbol,
+        price: stockB.currentPrice,
+        discount: stockB.discountPercent,
+        peRatio: stockB.peRatio,
+      },
     ];
   }, [stockA, stockB]);
 
@@ -54,9 +64,9 @@ function Compare() {
     }
 
     return [
-      { step: "Entry", [stockA.symbol]: stockA.buyPrice, [stockB.symbol]: stockB.buyPrice },
+      { step: "1Y Low", [stockA.symbol]: stockA.minPrice, [stockB.symbol]: stockB.minPrice },
       { step: "Current", [stockA.symbol]: stockA.currentPrice, [stockB.symbol]: stockB.currentPrice },
-      { step: "Projected", [stockA.symbol]: stockA.currentPrice * 1.05, [stockB.symbol]: stockB.currentPrice * 1.04 },
+      { step: "1Y High", [stockA.symbol]: stockA.maxPrice, [stockB.symbol]: stockB.maxPrice },
     ];
   }, [stockA, stockB]);
 
@@ -67,9 +77,9 @@ function Compare() {
       <section className="page-header">
         <div>
           <p className="eyebrow">Compare</p>
-          <h1>Compare tracked positions across price, trend, and valuation</h1>
+          <h1>Compare portfolio stocks across price, range, and valuation</h1>
           <p className="section-copy">
-            Select two holdings from your portfolio to review current price, movement profile, and P/E ratio in one side-by-side view.
+            Select two tracked stocks to review current price, 1-year range, and P/E ratio in one side-by-side view.
           </p>
         </div>
         <div className="compare-selectors">
@@ -119,7 +129,7 @@ function Compare() {
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Performance Comparison" subtitle="Buy, current, and projected trajectory.">
+        <ChartCard title="Range Comparison" subtitle="1-year low, current price, and 1-year high.">
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={performanceSeries}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -140,6 +150,18 @@ function Compare() {
               <YAxis />
               <Tooltip />
               <Bar dataKey="peRatio" fill="#7c3aed" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Discount Comparison" subtitle="Relative discount side-by-side.">
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={comparisonRows}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="metric" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="discount" fill="#0f766e" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>

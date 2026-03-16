@@ -26,11 +26,11 @@ function PortfolioGrowth({ data }) {
           tick={{ fontSize: 11, fill: "#64748b" }}
           tickLine={false}
           axisLine={{ stroke: "#cbd5e1" }}
-          tickFormatter={(value) => `$${Number(value).toLocaleString("en-US", { maximumFractionDigits: 0 })}`}
+          tickFormatter={(value) => `Rs ${Number(value).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`}
           width={86}
         />
         <Tooltip
-          formatter={(value) => formatCurrency(Number(value), "USD")}
+          formatter={(value) => formatCurrency(Number(value))}
           labelFormatter={(label) => `Period: ${label}`}
         />
         <Line

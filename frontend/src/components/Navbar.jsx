@@ -5,7 +5,6 @@ const navItems = [
   { label: "Home", to: "/" },
   { label: "My Dashboard", to: "/dashboard" },
   { label: "Growth", to: "/growth" },
-  { label: "ML Analysis", to: "/ml-analysis" },
   { label: "Gold/Silver", to: "/gold-silver" },
   { label: "Bitcoin", to: "/bitcoin" },
   { label: "Compare", to: "/compare" },
@@ -26,7 +25,10 @@ function Navbar() {
         TradeVista
       </NavLink>
 
-      <div className="navbar-links">
+      <div
+        className="navbar-links"
+        style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
+      >
         {navItems.map((item) => (
           <NavLink
             key={item.to}

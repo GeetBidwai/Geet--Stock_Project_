@@ -11,8 +11,8 @@ function StockTable({ stocks, onRemove, onStockClick }) {
   }
 
   return (
-    <div className="table-wrap">
-      <table>
+    <div className="table-wrap portfolio-detail-table-wrap">
+      <table className="portfolio-table detail-table stocks-table">
         <thead>
           <tr>
             <th>Stock</th>
@@ -34,7 +34,7 @@ function StockTable({ stocks, onRemove, onStockClick }) {
               className="stock-row"
               onClick={() => onStockClick?.(stock.id)}
             >
-              <td>{stock.name}</td>
+              <td className="stock-primary-cell">{stock.name}</td>
               <td>{stock.ticker || stock.stock_id}</td>
               <td>{stock.sector || "-"}</td>
               <td>{formatValue(stock.current_price)}</td>
@@ -46,7 +46,7 @@ function StockTable({ stocks, onRemove, onStockClick }) {
               <td>
                 <button
                   type="button"
-                  className="remove-btn"
+                  className="remove-chip"
                   onClick={(event) => {
                     event.stopPropagation();
                     onRemove(stock.id);

@@ -1,22 +1,6 @@
-import { formatCurrency } from "../charts/portfolioData";
-
-function formatNumber(value, digits = 2) {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return "-";
-  }
-  return Number(value).toFixed(digits);
-}
-
-function formatCurrencyOrDash(value, currency) {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return "-";
-  }
-  return formatCurrency(value, currency);
-}
-
-function PortfolioTable({ rows, totalValue, onRemove }) {
-  if (!rows.length) {
-    return <div className="empty-state-card">No positions yet. Create one from the builder above.</div>;
+function PortfolioTable({ portfolios, onOpen, onDelete }) {
+  if (!portfolios.length) {
+    return <div className="empty-state-card">No portfolios yet. Create one from the builder above.</div>;
   }
 
   return (
@@ -25,55 +9,48 @@ function PortfolioTable({ rows, totalValue, onRemove }) {
         <table className="portfolio-table">
           <thead>
             <tr>
-              <th>Symbol</th>
-              <th>Company</th>
-              <th>Quantity</th>
-              <th>Prev Close</th>
-              <th>Current Price</th>
-              <th>P/E Ratio</th>
-              <th>Discount %</th>
-              <th>Price Change</th>
+              <th>Portfolio</th>
+              <th>Sector</th>
+              <th>Holdings</th>
+              <th>Average Discount</th>
+              <th>Top Pick</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={`${row.portfolioId}-${row.stockId}`}>
-                <td>{row.symbol}</td>
-                <td>{row.company}</td>
-                <td>{row.quantity}</td>
-                <td>{formatCurrencyOrDash(row.buyPrice, row.currency)}</td>
-                <td>{formatCurrency(row.currentPrice, row.currency)}</td>
-                <td>{formatNumber(row.peRatio)}</td>
-                <td>{formatNumber(row.discountPercent)}%</td>
-                <td
-                  className={
-                    row.profitLoss === null || row.profitLoss === undefined || Number.isNaN(row.profitLoss)
-                      ? ""
-                      : row.profitLoss >= 0
-                        ? "profit"
-                        : "loss"
-                  }
-                >
-                  {formatCurrencyOrDash(row.profitLoss, row.currency)}
-                </td>
+            {portfolios.map((portfolio) => (
+              <tr key={portfolio.id}>
+                <td>{portfolio.name}</td>
+                <td>{portfolio.sector || "-"}</td>
+                <td>{portfolio.summary?.holdings_count ?? portfolio.stocks?.length ?? 0}</td>
                 <td>
-                  <button
-                    type="button"
-                    className="remove-chip"
-                    onClick={() => onRemove(row)}
-                  >
-                    Remove
-                  </button>
+                  {portfolio.summary?.average_discount != null
+                    ? `${portfolio.summary.average_discount}%`
+                    : "-"}
+                </td>
+                <td>{portfolio.summary?.top_pick?.ticker || "-"}</td>
+                <td>
+                  <div className="table-actions">
+                    <button
+                      type="button"
+                      className="range-btn"
+                      onClick={() => onOpen?.(portfolio.id)}
+                    >
+                      Open
+                    </button>
+                    <button
+                      type="button"
+                      className="remove-chip"
+                      onClick={() => onDelete?.(portfolio.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-      <div className="table-total">
-        <span>Total Portfolio Value</span>
-        <strong>{formatCurrency(totalValue, "USD")}</strong>
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ from .views import (
     PortfolioDetailAPIView,
     PortfolioListAPIView,
     PortfolioRiskClusterAPIView,
+    PortfolioSectorListAPIView,
     PortfolioTopDiscountAPIView,
     PortfolioTopGrowthAPIView,
     StockCollectionAPIView,
@@ -18,6 +19,7 @@ from .views import (
 
 urlpatterns = [
     path('dashboard/summary/', DashboardSummaryAPIView.as_view()),
+    path('portfolios/sectors/', PortfolioSectorListAPIView.as_view()),
     path('portfolios/', PortfolioListAPIView.as_view()),
     path('portfolios/<int:portfolio_id>/', PortfolioDetailAPIView.as_view()),
     path('portfolios/<int:portfolio_id>/top-discount/', PortfolioTopDiscountAPIView.as_view()),

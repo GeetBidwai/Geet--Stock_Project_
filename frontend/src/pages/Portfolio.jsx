@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Bar,
@@ -22,6 +22,7 @@ import {
 } from "../services/portfolioService";
 import {
   addStockToPortfolio,
+  getStockDetails,
   removeStockFromPortfolio,
 } from "../services/stockService";
 
@@ -37,19 +38,41 @@ function SummaryCard({ label, value, helper }) {
   );
 }
 
+async function loadPriceChangeData(portfolioId, stocks) {
+  const responses = await Promise.all(
+    stocks.map(async (stock) => {
+      try {
+        const detail = await getStockDetails(portfolioId, stock.id, "1mo");
+        return {
+          ticker: stock.ticker || stock.stock_id,
+          value: Number(detail.cards?.change_percent || 0),
+        };
+      } catch {
+        return {
+          ticker: stock.ticker || stock.stock_id,
+          value: 0,
+        };
+      }
+    })
+  );
+
+  return responses;
+}
+
 function Portfolio() {
   const { portfolioId } = useParams();
   const navigate = useNavigate();
   const [portfolio, setPortfolio] = useState(null);
   const [discountData, setDiscountData] = useState([]);
   const [growthData, setGrowthData] = useState([]);
+  const [priceChangeData, setPriceChangeData] = useState([]);
   const [riskData, setRiskData] = useState({ clusters: [], scatter_image: "" });
   const [growthRange, setGrowthRange] = useState("6mo");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [updating, setUpdating] = useState(false);
 
-  const loadPortfolio = async (selectedGrowthRange = growthRange) => {
+  const loadPortfolio = useCallback(async (selectedGrowthRange = growthRange) => {
     try {
       setLoading(true);
       setError("");
@@ -59,41 +82,24 @@ function Portfolio() {
         getPortfolioTopGrowth(portfolioId, selectedGrowthRange),
         getPortfolioRiskClusters(portfolioId),
       ]);
+      const stocks = portfolioData.stocks || [];
+      const priceChanges = await loadPriceChangeData(portfolioId, stocks);
+
       setPortfolio(portfolioData);
       setDiscountData(topDiscount.items || []);
       setGrowthData(topGrowth.items || []);
+      setPriceChangeData(priceChanges);
       setRiskData(clusters);
     } catch {
       setError("Unable to load this portfolio.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [growthRange, portfolioId]);
 
   useEffect(() => {
-    const run = async () => {
-      try {
-        setLoading(true);
-        setError("");
-        const [portfolioData, topDiscount, topGrowth, clusters] = await Promise.all([
-          getPortfolioById(portfolioId),
-          getPortfolioTopDiscount(portfolioId),
-          getPortfolioTopGrowth(portfolioId, growthRange),
-          getPortfolioRiskClusters(portfolioId),
-        ]);
-        setPortfolio(portfolioData);
-        setDiscountData(topDiscount.items || []);
-        setGrowthData(topGrowth.items || []);
-        setRiskData(clusters);
-      } catch {
-        setError("Unable to load this portfolio.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    run();
-  }, [portfolioId, growthRange]);
+    loadPortfolio();
+  }, [loadPortfolio]);
 
   const handleSelectStock = async (stockChoice) => {
     try {
@@ -129,6 +135,14 @@ function Portfolio() {
 
   const stocks = portfolio?.stocks || [];
   const summary = portfolio?.summary || {};
+  const opportunityData = stocks.map((stock) => ({
+    ticker: stock.ticker || stock.stock_id,
+    value: Number(stock.opportunity_score || 0),
+  }));
+  const peRatioData = stocks.map((stock) => ({
+    ticker: stock.ticker || stock.stock_id,
+    value: Number(stock.pe_ratio || 0),
+  }));
 
   if (loading && !portfolio) {
     return (
@@ -155,13 +169,18 @@ function Portfolio() {
     <main className="app-shell">
       <Navbar />
 
-      <section className="hero compact">
-        <p className="kicker">Portfolio</p>
+      <section className="hero compact portfolio-hero-simple">
+        <span className="pill portfolio-hero-badge">{portfolio?.sector || "No sector"}</span>
         <h1>{portfolio?.name}</h1>
-        <p className="subtitle">
-          {portfolio?.sector || "No sector"} | {stocks.length} holdings
+        <div className="portfolio-hero-meta">
+          <span>{stocks.length} stocks tracked</span>
+          <span>Undervalued: {summary.undervalued_count ?? 0}</span>
+          <span>Top pick: {summary.top_pick?.ticker || "-"}</span>
+        </div>
+        <p className="portfolio-hero-copy">
+          Track the names in this basket, review valuation signals, and scan the risk picture at a glance.
         </p>
-        <Link className="back-link" to="/dashboard">
+        <Link className="back-link hero-back-link" to="/dashboard">
           Back to dashboard
         </Link>
       </section>
@@ -199,16 +218,77 @@ function Portfolio() {
         {error && <p className="error-text">{error}</p>}
       </section>
 
-      <section className="panel">
+      <section className="panel portfolio-detail-card stocks-card">
         <div className="panel-head">
           <h2>Stocks</h2>
-          <span>{stocks.length} total</span>
+          <span className="pill">{stocks.length} tracked</span>
         </div>
         <StockTable
           stocks={stocks}
           onRemove={handleRemoveStock}
           onStockClick={handleStockClick}
         />
+      </section>
+
+      <section className="panel">
+        <div className="panel-head">
+          <h2>Portfolio Stock Analytics</h2>
+          <span>Per-stock metrics within this portfolio</span>
+        </div>
+        {!stocks.length ? (
+          <p className="empty-state">Add stocks to see portfolio-level stock analytics.</p>
+        ) : (
+          <div className="chart-grid">
+            <div className="chart-card">
+              <h3>Price Change</h3>
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={priceChangeData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="ticker" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#1d4ed8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="chart-card">
+              <h3>Opportunity Value</h3>
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={opportunityData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="ticker" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#f59e0b" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="chart-card">
+              <h3>P.E. Ratio</h3>
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={peRatioData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="ticker" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#7c3aed" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="chart-card">
+              <h3>Discount Percentage</h3>
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={discountData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="ticker" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="discount_percent" fill="#0d9488" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
       </section>
 
       <section className="panel">
@@ -266,17 +346,17 @@ function Portfolio() {
         )}
       </section>
 
-      <section className="panel">
+      <section className="panel portfolio-detail-card risk-card">
         <div className="panel-head">
           <h2>Risk Clusters</h2>
-          <span>3Y volatility, Sharpe, drawdown, CAGR</span>
+          <span className="pill">3Y volatility, Sharpe, drawdown, CAGR</span>
         </div>
         {!riskData.clusters?.length ? (
           <p className="empty-state">Risk clustering will appear after holdings load market history.</p>
         ) : (
           <>
-            <div className="table-wrap">
-              <table>
+            <div className="table-wrap portfolio-detail-table-wrap">
+              <table className="portfolio-table detail-table risk-table">
                 <thead>
                   <tr>
                     <th>Ticker</th>
@@ -291,13 +371,23 @@ function Portfolio() {
                 <tbody>
                   {riskData.clusters.map((item) => (
                     <tr key={item.id}>
-                      <td>{item.ticker}</td>
-                      <td>{item.name}</td>
+                      <td className="ticker-cell">{item.ticker}</td>
+                      <td className="stock-primary-cell">{item.name}</td>
                       <td>{item.volatility ?? "-"}</td>
                       <td>{item.sharpe_ratio ?? "-"}</td>
                       <td>{item.max_drawdown ?? "-"}</td>
                       <td>{item.cagr ?? "-"}</td>
-                      <td>{item.risk_label}</td>
+                      <td>
+                        <span
+                          className={
+                            item.risk_label?.toLowerCase().includes("high")
+                              ? "risk-badge risk-badge-high"
+                              : "risk-badge risk-badge-low"
+                          }
+                        >
+                          {item.risk_label}
+                        </span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
