@@ -6,4 +6,3 @@ backend/staticfiles/
 backend/db.sqlite3
 node_modules/
 frontend/dist/
-.env
